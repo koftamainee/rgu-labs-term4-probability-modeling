@@ -1,0 +1,98 @@
+SRC_DIR := src
+BUILD_DIR := build
+CXX := clang++
+CFLAGS := -Wall -Wextra -std=c++23 -Iinclude -O3
+DEBUGGER_CMD := pwndbg
+ARGS := # Arguments to pass to run/valgrind
+
+ifeq ($(V),1)
+	Q :=
+else
+	Q := @
+endif
+
+TASK ?=
+
+.PHONY: all clean run pwn valgrind help
+
+all:
+	$(Q)echo "Nothing to build. Use 'make run TASK=<n>' to compile and run src/<n>.c"
+
+$(BUILD_DIR)/%: $(SRC_DIR)/%.cpp
+	$(Q)echo "Compiling $< -> $@"
+	$(Q)mkdir -p $(BUILD_DIR)
+	$(Q)$(CXX) $(CFLAGS) -o $@ $< -lreadline -lsqlite3
+
+run:
+	@if [ -z "$(TASK)" ]; then \
+		echo "Error: TASK is not set. Usage: make run TASK=<n>"; \
+		exit 1; \
+	fi
+	$(MAKE) $(BUILD_DIR)/$(TASK)
+	$(Q)echo "Running task $(TASK)..."
+	$(Q)./$(BUILD_DIR)/$(TASK) $(ARGS)
+
+pwn:
+	@if [ -z "$(TASK)" ]; then \
+		echo "Error: TASK is not set. Usage: make pwn TASK=<n>"; \
+		exit 1; \
+	fi
+	$(MAKE) $(BUILD_DIR)/$(TASK)
+	$(Q)echo "Starting debug session for task $(TASK)..."
+	$(Q)$(DEBUGGER_CMD) ./$(BUILD_DIR)/$(TASK)
+
+valgrind:
+	@if [ -z "$(TASK)" ]; then \
+		echo "Error: TASK is not set. Usage: make valgrind TASK=<n>"; \
+		exit 1; \
+	fi
+	$(MAKE) $(BUILD_DIR)/$(TASK)
+	$(Q)echo "Running task $(TASK) with Valgrind..."
+	$(Q)valgrind --leak-check=full --show-leak-kinds=all \
+		--track-origins=yes --error-exitcode=1 \
+		./$(BUILD_DIR)/$(TASK) $(ARGS)
+
+clean:
+	$(Q)echo "Cleaning build artifacts..."
+	$(Q)rm -rf $(BUILD_DIR)
+
+build_server_client:
+	@if [ -z "$(TASK)" ]; then \
+		echo "Error: TASK is not set. Usage: make server-client TASK=<n>"; \
+		exit 1; \
+	fi
+	$(Q)mkdir -p $(BUILD_DIR)/$(TASK)
+	$(Q)echo "Compiling $(SRC_DIR)/$(TASK)_server.c -> $(BUILD_DIR)/$(TASK)/server"
+	$(Q)$(CC) $(CFLAGS) -o $(BUILD_DIR)/$(TASK)/server $(SRC_DIR)/$(TASK)_server.c
+	$(Q)echo "Compiling $(SRC_DIR)/$(TASK)_client.c -> $(BUILD_DIR)/$(TASK)/client"
+	$(Q)$(CC) $(CFLAGS) -o $(BUILD_DIR)/$(TASK)/client $(SRC_DIR)/$(TASK)_client.c
+	$(Q)echo "Build complete: $(BUILD_DIR)/$(TASK)/server and $(BUILD_DIR)/$(TASK)/client"
+
+run_server: build_server_client
+	@if [ -z "$(TASK)" ]; then \
+		echo "Error: TASK is not set. Usage: make run-server TASK=<n>"; \
+		exit 1; \
+	fi
+	$(Q)echo "Running server for TASK=$(TASK)..."
+	$(Q)./$(BUILD_DIR)/$(TASK)/server $(ARGS)
+
+run_client: build_server_client
+	@if [ -z "$(TASK)" ]; then \
+		echo "Error: TASK is not set. Usage: make run-client TASK=<n>"; \
+		exit 1; \
+	fi
+	$(Q)echo "Running client for TASK=$(TASK)..."
+	$(Q)./$(BUILD_DIR)/$(TASK)/client $(ARGS)
+
+help:
+	$(Q)echo "Laboratory Works Build System"
+	$(Q)echo "Targets:"
+	$(Q)echo "  run TASK=<n>       - Compile and run src/<n>.c"
+	$(Q)echo "  pwn TASK=<n>       - Debug build/<n> with pwndbg"
+	$(Q)echo "  valgrind TASK=<n>  - Run build/<n> under Valgrind"
+	$(Q)echo "  clean              - Remove build artifacts"
+	$(Q)echo ""
+	$(Q)echo "Variables:"
+	$(Q)echo "  TASK          - Task number (e.g., 1, 2, ...)"
+	$(Q)echo "  V=1           - Verbose output"
+	$(Q)echo "  ARGS          - Arguments for run/valgrind"
