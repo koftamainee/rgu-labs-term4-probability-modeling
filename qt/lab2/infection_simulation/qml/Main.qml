@@ -115,7 +115,7 @@ ApplicationWindow {
                 ParamSlider {
                     Layout.fillWidth: true
                     label: "p₁  Infection prob."
-                    value: 0.3; from: 0.01; to: 1.0; stepSize: 0.01
+                    value: 0.3; from: 0.0; to: 1.0; stepSize: 0.01
                     sliderColor: Theme.danger
                     onMoved: function(v) { sim_controller.set_infection_prob(v) }
                 }
@@ -192,7 +192,7 @@ ApplicationWindow {
 
                 RowLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 24; anchors.rightMargin: 24; spacing: 0
+                    anchors.leftMargin: 24; anchors.rightMargin: 24; spacing: 20
 
                     StatBadge { Layout.fillWidth: true; label: "HEALTHY";   value: sim_controller.healthy_count;   accent: Theme.success; fraction: root.totalCount }
                     StatDivider { Layout.fillHeight: true; Layout.topMargin: 12; Layout.bottomMargin: 12 }
@@ -430,12 +430,6 @@ ApplicationWindow {
                 color: "#fca5a5"; font.pixelSize: 12
                 anchors.verticalCenter: parent.verticalCenter
                 wrapMode: Text.NoWrap
-            }
-            Rectangle {
-                width: 20; height: 20; radius: 4; color: "transparent"
-                anchors.verticalCenter: parent.verticalCenter
-                Text { anchors.centerIn: parent; text: "✕"; color: "#ef4444"; font.pixelSize: 12 }
-                MouseArea { anchors.fill: parent; cursorShape: Qt.PointingHandCursor; onClicked: errorBanner.visible = false }
             }
         }
     }

@@ -10,6 +10,12 @@ Item {
     anchors.fill: parent
     visible: false
     z: 1000
+    focus: true
+    Keys.onReleased: {
+        if (event.key === Qt.Key_Escape) {
+            dlg.visible = false
+        }
+    }
 
     signal accepted(string filePath)
     property string currentPath: ""

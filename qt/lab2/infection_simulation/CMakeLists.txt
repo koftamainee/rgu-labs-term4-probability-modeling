@@ -27,6 +27,7 @@ qt_add_qml_module(appinfection_simulation
         qml/FilePickerDialog.qml
     SOURCES src/simulation.hpp src/simulation.cpp
     SOURCES src/simulation_controller.hpp src/simulation_controller.cpp
+    QML_FILES qml/Theme.qml
 )
 
 
