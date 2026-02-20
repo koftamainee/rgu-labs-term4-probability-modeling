@@ -5,7 +5,7 @@
 #include "task_runner.hpp"
 
 int main() {
-  int n = 1000;
+  int n = 6;
   size_t simulations = 1e8;
 
   TaskRunner runner;
