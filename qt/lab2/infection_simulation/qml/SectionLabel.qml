@@ -1,7 +1,8 @@
 import QtQuick
+import "."
 
 Text {
-    color: "#3b82f6"
+    color: Theme.accent
     font.pixelSize: 10
     font.letterSpacing: 2
     font.bold: true

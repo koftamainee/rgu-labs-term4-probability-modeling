@@ -1,23 +1,24 @@
 import QtQuick
 import QtQuick.Layouts
+import "."
 
 Rectangle {
     id: tab
     property string label: ""
     property bool highlight: false
-    property color accent: "#3b82f6"
+    property color accent: Theme.accent
     signal clicked()
 
     height: 32
     radius: 4
     color: highlight ? accent : "transparent"
-    border.color: highlight ? accent : "#2a3a55"
+    border.color: highlight ? accent : Theme.border
     border.width: 1
 
     Text {
         anchors.centerIn: parent
         text: tab.label
-        color: "#e2e8f0"
+        color: Theme.txt
         font.pixelSize: 11
         font.bold: true
         font.letterSpacing: 1

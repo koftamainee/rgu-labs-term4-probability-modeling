@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import "."
 
 ColumnLayout {
     id: ps
@@ -9,7 +10,7 @@ ColumnLayout {
     property real from: 0
     property real to: 1
     property real stepSize: 0.01
-    property color sliderColor: "#3b82f6"
+    property color sliderColor: Theme.accent
     signal moved(real value)
 
     spacing: 4
@@ -17,7 +18,7 @@ ColumnLayout {
     RowLayout {
         Text {
             text: ps.label
-            color: "#94a3b8"
+            color: Theme.muted
             font.pixelSize: 11
             Layout.fillWidth: true
         }
@@ -43,7 +44,7 @@ ColumnLayout {
             width: slider.availableWidth
             height: 4
             radius: 2
-            color: "#2a3a55"
+            color: Theme.border
             Rectangle {
                 width: slider.visualPosition * parent.width
                 height: 4

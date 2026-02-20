@@ -1,18 +1,19 @@
 import QtQuick
 import QtQuick.Layouts
+import "."
 
 ColumnLayout {
     id: sb
     property string label: ""
     property int value: 0
-    property color accent: "#ffffff"
+    property color accent: Theme.accent
     property int fraction: 1
 
     spacing: 2
 
     Text {
         text: sb.label
-        color: "#64748b"
+        color: Theme.muted
         font.pixelSize: 10
         font.letterSpacing: 2
         font.bold: true

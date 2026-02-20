@@ -1,6 +1,7 @@
 import QtQuick
+import "."
 
 Rectangle {
     width: 1
-    color: "#2a3a55"
+    color: Theme.border
 }
