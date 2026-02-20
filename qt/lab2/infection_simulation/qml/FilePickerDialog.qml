@@ -11,7 +11,7 @@ Item {
     visible: false
     z: 1000
     focus: true
-    Keys.onReleased: {
+    Keys.onReleased: (event) => {
         if (event.key === Qt.Key_Escape) {
             dlg.visible = false
         }
