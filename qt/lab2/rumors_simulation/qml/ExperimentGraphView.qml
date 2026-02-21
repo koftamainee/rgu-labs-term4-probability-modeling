@@ -9,7 +9,7 @@ Item {
     property color colReached: "#34d399"
     property color colFailed:  "#f87171"
     property color colBg:      "#0f0c1f"
-    property color colEdge:    "#7c6fa0"
+    property color colEdge:    "#a5a1b8"
     property color colMuted:   "#a5a1b8"
     property color colTxt:     "#e0d9ff"
     property color colCard:    "#2a244a"
@@ -29,7 +29,18 @@ Item {
         property var nodeVel: []
         property var nodeSteps: []
 
+        // animation state
+        property int  animIter:    0
+        property int  totalIters:  150
+        property int  itersPerTick: 3
+        property real layoutK:     1.0
+        property real layoutTemp:  0.05
+        property real layoutCool:  0.88
+
         function loadExperiment(idx) {
+            layoutTimer.stop()
+            animIter = 0
+
             if (idx < 0) {
                 nodes = []
                 edgeIndices = []
@@ -75,14 +86,24 @@ Item {
                     }
                 }
             }
-            // Origin node 0 is at step 0
             if (idxMap[0] !== undefined) {
                 nodeSteps[idxMap[0]] = -1
             }
 
             initPositions()
-            runLayout()
-            canvas.requestPaint()
+
+            var n = nodes.length
+            layoutK    = Math.sqrt(0.4 / Math.max(n, 1))
+            layoutTemp = 0.1
+            animIter   = 0
+
+            if (n <= 3) {
+                runAllLayout()
+                canvas.requestPaint()
+            } else {
+                canvas.requestPaint()
+                layoutTimer.start()
+            }
         }
 
         function initPositions() {
@@ -96,56 +117,75 @@ Item {
             }
         }
 
-        function runLayout() {
+        function runIterations(count) {
             var n = nodes.length
-            if (n === 0) {
-                return
-            }
-            var k = Math.sqrt(0.4 / n)
-            var temp = 0.1
-            var cooling = 0.95
+            if (n === 0) { return }
+            var k       = layoutK
             var repStep = n > 300 ? 3 : 1
 
-            for (var iter = 0; iter < 150; iter++) {
+            for (var iter = 0; iter < count; iter++) {
+                // repulsion
                 for (var i = 0; i < n; i++) {
                     var fx = 0
                     var fy = 0
                     for (var j = 0; j < n; j += repStep) {
-                        if (i === j) {
-                            continue
-                        }
-                        var dx = nodePos[i].x - nodePos[j].x
-                        var dy = nodePos[i].y - nodePos[j].y
+                        if (i === j) { continue }
+                        var dx   = nodePos[i].x - nodePos[j].x
+                        var dy   = nodePos[i].y - nodePos[j].y
                         var dist = Math.sqrt(dx * dx + dy * dy) + 0.0001
-                        var rep = (k * k) / dist
+                        var rep  = (k * k) / dist
                         fx += (dx / dist) * rep
                         fy += (dy / dist) * rep
                     }
-                    nodeVel[i].vx = (nodeVel[i].vx + fx) * 0.5
-                    nodeVel[i].vy = (nodeVel[i].vy + fy) * 0.5
+                    nodeVel[i].vx = (nodeVel[i].vx + fx) * 0.25
+                    nodeVel[i].vy = (nodeVel[i].vy + fy) * 0.25
                 }
                 for (var e = 0; e < edgeIndices.length; e++) {
-                    var ai = edgeIndices[e].ai
-                    var bi = edgeIndices[e].bi
-                    var ex = nodePos[ai].x - nodePos[bi].x
-                    var ey = nodePos[ai].y - nodePos[bi].y
-                    var edist = Math.sqrt(ex * ex + ey * ey) + 0.0001
-                    var att = (edist * edist) / k
-                    var fax = (ex / edist) * att * 0.5
-                    var fay = (ey / edist) * att * 0.5
+                    var ai  = edgeIndices[e].ai
+                    var bi  = edgeIndices[e].bi
+                    var ex  = nodePos[ai].x - nodePos[bi].x
+                    var ey  = nodePos[ai].y - nodePos[bi].y
+                    var ed  = Math.sqrt(ex * ex + ey * ey) + 0.0001
+                    var att = (ed * ed) / k
+                    var fax = (ex / ed) * att * 0.5
+                    var fay = (ey / ed) * att * 0.5
                     nodeVel[ai].vx -= fax
                     nodeVel[ai].vy -= fay
                     nodeVel[bi].vx += fax
                     nodeVel[bi].vy += fay
                 }
+                // move
                 for (var vi = 0; vi < n; vi++) {
-                    var vmag = Math.sqrt(nodeVel[vi].vx * nodeVel[vi].vx + nodeVel[vi].vy * nodeVel[vi].vy) + 0.0001
-                    var scale = Math.min(vmag, temp) / vmag
+                    var vmag  = Math.sqrt(nodeVel[vi].vx * nodeVel[vi].vx + nodeVel[vi].vy * nodeVel[vi].vy) + 0.0001
+                    var scale = Math.min(vmag, layoutTemp) / vmag
                     nodePos[vi].x = Math.max(0.04, Math.min(0.96, nodePos[vi].x + nodeVel[vi].vx * scale))
                     nodePos[vi].y = Math.max(0.04, Math.min(0.96, nodePos[vi].y + nodeVel[vi].vy * scale))
                 }
-                temp *= cooling
+                layoutTemp *= layoutCool
+                animIter++
             }
+        }
+
+        function runAllLayout() {
+            var remaining = totalIters - animIter
+            if (remaining > 0) {
+                runIterations(remaining)
+            }
+        }
+    }
+
+    Timer {
+        id: layoutTimer
+        interval: 16
+        repeat: true
+        running: false
+        onTriggered: {
+            if (internal.animIter >= internal.totalIters) {
+                stop()
+                return
+            }
+            internal.runIterations(internal.itersPerTick)
+            canvas.requestPaint()
         }
     }
 
@@ -153,12 +193,8 @@ Item {
     property real viewOffX: 0.0
     property real viewOffY: 0.0
 
-    onWidthChanged: {
-        canvas.requestPaint()
-    }
-    onHeightChanged: {
-        canvas.requestPaint()
-    }
+    onWidthChanged:  { canvas.requestPaint() }
+    onHeightChanged: { canvas.requestPaint() }
 
     Canvas {
         id: canvas
@@ -174,71 +210,62 @@ Item {
 
             var nodes = internal.nodes
             var edges = internal.edgeIndices
-            var pos = internal.nodePos
+            var pos   = internal.nodePos
             var steps = internal.nodeSteps
 
-            if (nodes.length === 0) {
-                return
-            }
+            if (nodes.length === 0) { return }
 
             var sc = graphView.viewScale
             var ox = graphView.viewOffX
             var oy = graphView.viewOffY
             var nr = Math.max(10, 10 * sc)
 
+            // animation progress [0..1] for fade-in effect
+            var progress = internal.totalIters > 0
+                ? Math.min(1.0, internal.animIter / internal.totalIters)
+                : 1.0
+
             function px(nx) { return ox + nx * W * sc }
             function py(ny) { return oy + ny * H * sc }
 
-            // Find max step for color gradient
-            var maxStep = 0
-            for (var s = 0; s < steps.length; s++) {
-                if (steps[s] !== 99999 && steps[s] > maxStep) {
-                    maxStep = steps[s]
-                }
-            }
-
-            // Draw edges
+            // draw edges — fade in as layout settles
+            ctx.lineWidth = Math.max(2, 2.5 * sc)
             for (var e = 0; e < edges.length; e++) {
                 var ai = edges[e].ai
                 var bi = edges[e].bi
-                ctx.beginPath()
-                ctx.strokeStyle = graphView.colEdge
-                ctx.lineWidth = Math.max(2, 2.5 * sc)
-                ctx.globalAlpha = 1.0
-
-                // Arrow head
                 var x1 = px(pos[ai].x)
                 var y1 = py(pos[ai].y)
                 var x2 = px(pos[bi].x)
                 var y2 = py(pos[bi].y)
-                var angle = Math.atan2(y2 - y1, x2 - x1)
+                var angle    = Math.atan2(y2 - y1, x2 - x1)
                 var arrowLen = Math.max(6, nr * 1.2)
-                var ex2 = x2 - Math.cos(angle) * nr
-                var ey2 = y2 - Math.sin(angle) * nr
+                var ex2      = x2 - Math.cos(angle) * nr
+                var ey2      = y2 - Math.sin(angle) * nr
+
+                ctx.globalAlpha = progress
+                ctx.strokeStyle = graphView.colEdge
+                ctx.beginPath()
                 ctx.moveTo(x1, y1)
                 ctx.lineTo(ex2, ey2)
                 ctx.stroke()
 
-                // Arrow tip
-                ctx.globalAlpha = 1.0
+                ctx.fillStyle = graphView.colEdge
                 ctx.beginPath()
                 ctx.moveTo(ex2, ey2)
                 ctx.lineTo(ex2 - Math.cos(angle - 0.4) * arrowLen, ey2 - Math.sin(angle - 0.4) * arrowLen)
                 ctx.lineTo(ex2 - Math.cos(angle + 0.4) * arrowLen, ey2 - Math.sin(angle + 0.4) * arrowLen)
                 ctx.closePath()
-                ctx.fillStyle = graphView.colEdge
                 ctx.fill()
-
             }
 
             ctx.globalAlpha = 1.0
 
-            // Draw nodes
+            // draw nodes
             for (var i = 0; i < nodes.length; i++) {
-                var nx = px(pos[i].x)
-                var ny = py(pos[i].y)
+                var nx     = px(pos[i].x)
+                var ny     = py(pos[i].y)
                 var nodeId = nodes[i].id
-                var step = steps[i]
+                var step   = steps[i]
 
                 var col
                 if (nodeId === 0) {
@@ -249,17 +276,14 @@ Item {
                     col = graphView.colReached
                 }
 
-                // Glow for origin
+                // glow for origin
                 if (nodeId === 0) {
+                    ctx.globalAlpha = 0.15 * progress
                     ctx.beginPath()
                     ctx.arc(nx, ny, nr * 2.8, 0, 2 * Math.PI)
-                    ctx.fillStyle = Qt.rgba(
-                        graphView.colOrigin.r,
-                        graphView.colOrigin.g,
-                        graphView.colOrigin.b,
-                        0.15
-                    )
+                    ctx.fillStyle = graphView.colOrigin
                     ctx.fill()
+                    ctx.globalAlpha = 1.0
                 }
 
                 ctx.beginPath()
@@ -267,13 +291,24 @@ Item {
                 ctx.fillStyle = col
                 ctx.fill()
 
-                // Turn number when this person first heard the rumour
+                // turn label
                 ctx.fillStyle = "#0f0c1f"
                 ctx.font = "bold " + Math.round(nr * 0.75) + "px sans-serif"
                 ctx.textAlign = "center"
                 ctx.textBaseline = "middle"
                 var turnLabel = nodeId === 0 ? "0" : (step !== 99999 ? String(step + 1) : "?")
                 ctx.fillText(turnLabel, nx, ny)
+            }
+
+            // settling indicator while animating
+            if (internal.animIter < internal.totalIters) {
+                ctx.globalAlpha = 0.6
+                ctx.fillStyle = graphView.colMuted
+                ctx.font = "11px sans-serif"
+                ctx.textAlign = "right"
+                ctx.textBaseline = "top"
+                ctx.fillText("settling…  " + Math.round(progress * 100) + "%", W - 16, 16)
+                ctx.globalAlpha = 1.0
             }
         }
     }
@@ -285,6 +320,11 @@ Item {
         property real lastY: 0
 
         onPressed: function(m) {
+            // clicking while animating skips to the end
+            if (layoutTimer.running) {
+                layoutTimer.stop()
+                internal.runAllLayout()
+            }
             lastX = m.x
             lastY = m.y
         }
@@ -296,14 +336,18 @@ Item {
             canvas.requestPaint()
         }
         onWheel: function(w) {
-            var f = w.angleDelta.y > 0 ? 1.15 : 0.87
+            if (layoutTimer.running) {
+                layoutTimer.stop()
+                internal.runAllLayout()
+            }
+            var f  = w.angleDelta.y > 0 ? 1.15 : 0.87
             var ns = Math.max(0.1, Math.min(12.0, graphView.viewScale * f))
             graphView.viewOffX = w.x - (w.x - graphView.viewOffX) * (ns / graphView.viewScale)
             graphView.viewOffY = w.y - (w.y - graphView.viewOffY) * (ns / graphView.viewScale)
             graphView.viewScale = ns
             canvas.requestPaint()
         }
-        cursorShape: Qt.OpenHandCursor
+        cursorShape: layoutTimer.running ? Qt.BusyCursor : Qt.OpenHandCursor
     }
 
     // Zoom controls
@@ -325,9 +369,9 @@ Item {
 
             Repeater {
                 model: [
-                    { lbl: "+", act: function() { graphView.viewScale = Math.min(12, graphView.viewScale * 1.25); canvas.requestPaint() } },
-                    { lbl: "−", act: function() { graphView.viewScale = Math.max(0.1, graphView.viewScale * 0.8);  canvas.requestPaint() } },
-                    { lbl: "⌂", act: function() { graphView.viewScale = 1; graphView.viewOffX = 0; graphView.viewOffY = 0; canvas.requestPaint() } }
+                    { lbl: "+", act: function() { if (layoutTimer.running) { layoutTimer.stop(); internal.runAllLayout() } graphView.viewScale = Math.min(12, graphView.viewScale * 1.25); canvas.requestPaint() } },
+                    { lbl: "−", act: function() { if (layoutTimer.running) { layoutTimer.stop(); internal.runAllLayout() } graphView.viewScale = Math.max(0.1, graphView.viewScale * 0.8);  canvas.requestPaint() } },
+                    { lbl: "⌂", act: function() { if (layoutTimer.running) { layoutTimer.stop(); internal.runAllLayout() } graphView.viewScale = 1; graphView.viewOffX = 0; graphView.viewOffY = 0; canvas.requestPaint() } }
                 ]
 
                 Rectangle {
@@ -346,9 +390,7 @@ Item {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            modelData.act()
-                        }
+                        onClicked: { modelData.act() }
                     }
                 }
             }
@@ -360,7 +402,7 @@ Item {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 16
-        width: 140
+        width: 150
         height: 86
         color: Qt.rgba(0.07, 0.05, 0.12, 0.92)
         radius: 8

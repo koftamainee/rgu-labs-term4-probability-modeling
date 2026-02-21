@@ -228,19 +228,6 @@ ApplicationWindow {
                         sim_controller.run_single()
                     }
                 }
-
-                AppButton {
-                    Layout.fillWidth: true
-                    label: "⏹  Stop"
-                    accent: Theme.warn
-                    enabled: sim_controller.is_running
-                    opacity: enabled ? 1.0 : 0.4
-                    onClicked: {
-                        sim_controller.stop()
-                        progressOverlay.visible = false
-                    }
-                }
-
                 AppButton {
                     Layout.fillWidth: true
                     label: "Reset"
