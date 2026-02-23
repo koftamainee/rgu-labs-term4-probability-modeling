@@ -16,8 +16,15 @@ Item {
     property color colAccent:    "#3b82f6"
     property color colWarn:      "#f59e0b"
 
+    property real edgeVisibleScale: 0.35
+    property real glowVisibleScale: 0.6
+
+    property real viewScale: 1.0
+    property real viewOffX:  0.0
+    property real viewOffY:  0.0
+
     function loadGraph() {
-        internal.fetchAndBuild(600)
+        internal.fetchAndBuild(5000)
     }
 
     function updateStates(nodes) {
@@ -54,6 +61,7 @@ Item {
         }
     }
 
+    // ── Internal state ──────────────────────────────────────────────────────
     QtObject {
         id: internal
 
@@ -64,7 +72,7 @@ Item {
         property int totalNodes: 0
 
         function fetchAndBuild(n) {
-            var sub = sim_controller.get_bfs_subgraph(n)
+            var sub   = sim_controller.get_bfs_subgraph(n)
             var nodes = sub["nodes"]
             var edges = sub["edges"]
 
@@ -96,66 +104,157 @@ Item {
             var n = subNodes.length
             for (var i = 0; i < n; i++) {
                 var angle = (2 * Math.PI * i) / n
-                nodePos.push({ x: 0.5 + 0.35 * Math.cos(angle), y: 0.5 + 0.35 * Math.sin(angle) })
+                nodePos.push({ x: 0.5 + 0.35 * Math.cos(angle),
+                                y: 0.5 + 0.35 * Math.sin(angle) })
                 nodeVel.push({ vx: 0, vy: 0 })
             }
         }
 
-        function runLayout() {
-            var n = subNodes.length
-            if (n === 0) return
-            var k = Math.sqrt(1.0 / n)
-            var temp = 0.1
-            var cooling = 0.95
-            var repStep = n > 300 ? 3 : 1
+        property real theta: 0.9
 
-            for (var iter = 0; iter < 120; iter++) {
-                for (var i = 0; i < n; i++) {
-                    var fx = 0, fy = 0
-                    for (var j = 0; j < n; j += repStep) {
-                        if (i === j) continue
-                        var dx = nodePos[i].x - nodePos[j].x
-                        var dy = nodePos[i].y - nodePos[j].y
-                        var dist = Math.sqrt(dx*dx + dy*dy) + 0.0001
-                        var rep = (k * k) / dist
-                        fx += (dx / dist) * rep
-                        fy += (dy / dist) * rep
-                    }
-                    nodeVel[i].vx = (nodeVel[i].vx + fx) * 0.5
-                    nodeVel[i].vy = (nodeVel[i].vy + fy) * 0.5
+        function buildQuadtree(positions) {
+            var minX = 1e9, minY = 1e9, maxX = -1e9, maxY = -1e9
+            for (var i = 0; i < positions.length; i++) {
+                if (positions[i].x < minX) minX = positions[i].x
+                if (positions[i].y < minY) minY = positions[i].y
+                if (positions[i].x > maxX) maxX = positions[i].x
+                if (positions[i].y > maxY) maxY = positions[i].y
+            }
+            var hw = Math.max((maxX - minX), (maxY - minY)) / 2 + 0.01
+            var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2
+            var root = mkNode(cx, cy, hw)
+            for (var j = 0; j < positions.length; j++)
+                qtInsert(root, j, positions[j].x, positions[j].y)
+            return root
+        }
+
+        function mkNode(cx, cy, hw) {
+            return { cx: cx, cy: cy, hw: hw, mass: 0, cmx: 0, cmy: 0,
+                     ch: null, leafIdx: -1 }
+        }
+
+        function qtInsert(node, idx, x, y) {
+            if (node.mass === 0) {
+                node.mass = 1; node.cmx = x; node.cmy = y; node.leafIdx = idx
+                return
+            }
+            node.cmx = (node.cmx * node.mass + x) / (node.mass + 1)
+            node.cmy = (node.cmy * node.mass + y) / (node.mass + 1)
+            node.mass++
+
+            if (node.ch === null) {
+                node.ch = [null, null, null, null]
+                if (node.leafIdx >= 0) {
+                    var ei = node.leafIdx
+                    var q0 = qtQ(node, nodePos[ei].x, nodePos[ei].y)
+                    if (!node.ch[q0]) node.ch[q0] = qtChild(node, q0)
+                    qtInsert(node.ch[q0], ei, nodePos[ei].x, nodePos[ei].y)
+                    node.leafIdx = -1
                 }
+            }
+            var q = qtQ(node, x, y)
+            if (!node.ch[q]) node.ch[q] = qtChild(node, q)
+            qtInsert(node.ch[q], idx, x, y)
+        }
+
+        function qtQ(node, x, y) {
+            return (x >= node.cx ? 1 : 0) + (y >= node.cy ? 2 : 0)
+        }
+
+        function qtChild(p, q) {
+            var hw = p.hw / 2
+            return mkNode(p.cx + ((q & 1) ? hw : -hw),
+                          p.cy + ((q & 2) ? hw : -hw), hw)
+        }
+
+        function qtForce(node, ix, iy, fRef, k) {
+            if (!node || node.mass === 0) return
+            var dx = ix - node.cmx
+            var dy = iy - node.cmy
+            var d2 = dx*dx + dy*dy
+            if (d2 < 1e-10) return
+            if (node.ch === null || (node.hw * 2) * (node.hw * 2) / d2 < theta * theta) {
+                var d   = Math.sqrt(d2)
+                var rep = (k * k * node.mass) / d
+                fRef[0] += dx / d * rep
+                fRef[1] += dy / d * rep
+                return
+            }
+            for (var c = 0; c < 4; c++)
+                if (node.ch[c]) qtForce(node.ch[c], ix, iy, fRef, k)
+        }
+
+        function nodeBaseRadius(n) {
+            if (n > 3000) return 1.2
+            if (n > 2000) return 1.8
+            if (n > 1000) return 2.5
+            if (n >  500) return 3.5
+            if (n >  200) return 5.0
+            return 7.0
+        }
+
+        function layoutSpacingScale(n) {
+            if (n > 3000) return 0.55
+            if (n > 2000) return 0.65
+            if (n > 1000) return 0.75
+            if (n >  500) return 0.85
+            if (n >  200) return 0.95
+            return 1.0
+        }
+
+        function runLayout() {
+            var n    = subNodes.length
+            if (n === 0) return
+            var spacing = layoutSpacingScale(n)
+            var k    = Math.sqrt(1.0 / n) * spacing
+            var temp = 0.1
+            var cool = 0.96
+            var iters = n > 1000 ? 60 : n > 300 ? 90 : 120
+            var fRef  = [0, 0]
+
+            for (var iter = 0; iter < iters; iter++) {
+                var qt = buildQuadtree(nodePos)
+
+                // Repulsion (Barnes-Hut)
+                for (var i = 0; i < n; i++) {
+                    fRef[0] = 0; fRef[1] = 0
+                    qtForce(qt, nodePos[i].x, nodePos[i].y, fRef, k)
+                    nodeVel[i].vx = (nodeVel[i].vx + fRef[0]) * 0.5
+                    nodeVel[i].vy = (nodeVel[i].vy + fRef[1]) * 0.5
+                }
+
+                // Attraction along edges
                 for (var e = 0; e < subEdgeIndices.length; e++) {
                     var ai = subEdgeIndices[e].ai, bi = subEdgeIndices[e].bi
                     var ex = nodePos[ai].x - nodePos[bi].x
                     var ey = nodePos[ai].y - nodePos[bi].y
-                    var edist = Math.sqrt(ex*ex + ey*ey) + 0.0001
-                    var att = (edist * edist) / k
-                    var fax = (ex / edist) * att * 0.5
-                    var fay = (ey / edist) * att * 0.5
+                    var ed = Math.sqrt(ex*ex + ey*ey) + 0.0001
+                    var att = (ed * ed) / k
+                    var fax = (ex / ed) * att * 0.5
+                    var fay = (ey / ed) * att * 0.5
                     nodeVel[ai].vx -= fax; nodeVel[ai].vy -= fay
                     nodeVel[bi].vx += fax; nodeVel[bi].vy += fay
                 }
+
+                // Integrate
                 for (var vi = 0; vi < n; vi++) {
-                    var vmag = Math.sqrt(nodeVel[vi].vx*nodeVel[vi].vx + nodeVel[vi].vy*nodeVel[vi].vy) + 0.0001
-                    var scale = Math.min(vmag, temp) / vmag
-                    nodePos[vi].x = Math.max(0.02, Math.min(0.98, nodePos[vi].x + nodeVel[vi].vx * scale))
-                    nodePos[vi].y = Math.max(0.02, Math.min(0.98, nodePos[vi].y + nodeVel[vi].vy * scale))
+                    var vm = Math.sqrt(nodeVel[vi].vx*nodeVel[vi].vx
+                                     + nodeVel[vi].vy*nodeVel[vi].vy) + 0.0001
+                    var sc = Math.min(vm, temp) / vm
+                    nodePos[vi].x += nodeVel[vi].vx * sc
+                    nodePos[vi].y += nodeVel[vi].vy * sc
                 }
-                temp *= cooling
+                temp *= cool
             }
         }
     }
-
-    property real viewScale: 1.0
-    property real viewOffX:  0.0
-    property real viewOffY:  0.0
 
     Canvas {
         id: canvas
         anchors.fill: parent
 
         onPaint: {
-            var ctx = getContext("2d")
+            var ctx  = getContext("2d")
             var W = width, H = height
             ctx.clearRect(0, 0, W, H)
             ctx.fillStyle = graphView.colBg
@@ -166,40 +265,69 @@ Item {
             var pos   = internal.nodePos
             if (nodes.length === 0) return
 
-            var sc = graphView.viewScale
-            var ox = graphView.viewOffX
-            var oy = graphView.viewOffY
-            var nr = Math.max(2, 5 * sc)
+            var sc  = graphView.viewScale
+            var ox  = graphView.viewOffX
+            var oy  = graphView.viewOffY
+            var baseR = internal.nodeBaseRadius(nodes.length)
+            var nr  = Math.max(1, baseR * sc)
+
+            var vpX0 = -ox / (W * sc),      vpY0 = -oy / (H * sc)
+            var vpX1 = (W - ox) / (W * sc), vpY1 = (H - oy) / (H * sc)
+            var mg   = nr * 3 / (W * sc)
+            vpX0 -= mg; vpY0 -= mg; vpX1 += mg; vpY1 += mg
 
             function px(nx) { return ox + nx * W * sc }
             function py(ny) { return oy + ny * H * sc }
-
-            ctx.strokeStyle = graphView.colEdge
-            ctx.lineWidth = Math.max(0.3, 0.6 * sc)
-            ctx.globalAlpha = 0.45
-            ctx.beginPath()
-            for (var e = 0; e < edges.length; e++) {
-                var ai = edges[e].ai, bi = edges[e].bi
-                ctx.moveTo(px(pos[ai].x), py(pos[ai].y))
-                ctx.lineTo(px(pos[bi].x), py(pos[bi].y))
+            function inView(x, y) {
+                return x >= vpX0 && x <= vpX1 && y >= vpY0 && y <= vpY1
             }
-            ctx.stroke()
-            ctx.globalAlpha = 1.0
 
+            if (sc >= graphView.edgeVisibleScale) {
+                var eAlpha = Math.min(1.0, (sc - graphView.edgeVisibleScale) / 0.25) * 0.45
+                ctx.strokeStyle = graphView.colEdge
+                ctx.lineWidth   = Math.max(0.3, 0.6 * sc)
+                ctx.globalAlpha = eAlpha
+
+                var minPx2 = 1.0
+
+                ctx.beginPath()
+                for (var e = 0; e < edges.length; e++) {
+                    var ai = edges[e].ai, bi = edges[e].bi
+                    var ax = pos[ai].x, ay = pos[ai].y
+                    var bx = pos[bi].x, by = pos[bi].y
+                    // Skip if both endpoints off-screen
+                    if (!inView(ax, ay) && !inView(bx, by)) continue
+                    // Skip sub-pixel edges
+                    var sdx = (ax - bx) * W * sc, sdy = (ay - by) * H * sc
+                    if (sdx*sdx + sdy*sdy < minPx2) continue
+
+                    ctx.moveTo(px(ax), py(ay))
+                    ctx.lineTo(px(bx), py(by))
+                }
+                ctx.stroke()
+                ctx.globalAlpha = 1.0
+            }
+
+            var showGlow = sc >= graphView.glowVisibleScale
             for (var i = 0; i < nodes.length; i++) {
-                var s = nodes[i].state
+                var nx = pos[i].x, ny = pos[i].y
+                if (!inView(nx, ny)) continue
+
+                var s   = nodes[i].state
                 var col = s === 1 ? graphView.colInfected
                         : s === 2 ? graphView.colRecovered
                         : graphView.colHealthy
-                var nx = px(pos[i].x), ny = py(pos[i].y)
-                if (s === 1) {
+                var spx = px(nx), spy = py(ny)
+
+                if (s === 1 && showGlow) {
                     ctx.beginPath()
-                    ctx.arc(nx, ny, nr * 2.5, 0, 2 * Math.PI)
+                    ctx.arc(spx, spy, nr * 2.5, 0, 2 * Math.PI)
                     ctx.fillStyle = Qt.rgba(0.94, 0.27, 0.27, 0.12)
                     ctx.fill()
                 }
+
                 ctx.beginPath()
-                ctx.arc(nx, ny, nr, 0, 2 * Math.PI)
+                ctx.arc(spx, spy, nr, 0, 2 * Math.PI)
                 ctx.fillStyle = col
                 ctx.fill()
             }
@@ -218,7 +346,7 @@ Item {
             canvas.requestPaint()
         }
         onWheel: function(w) {
-            var f = w.angleDelta.y > 0 ? 1.15 : 0.87
+            var f  = w.angleDelta.y > 0 ? 1.15 : 0.87
             var ns = Math.max(0.1, Math.min(12.0, graphView.viewScale * f))
             graphView.viewOffX = w.x - (w.x - graphView.viewOffX) * (ns / graphView.viewScale)
             graphView.viewOffY = w.y - (w.y - graphView.viewOffY) * (ns / graphView.viewScale)
@@ -228,7 +356,6 @@ Item {
         cursorShape: Qt.OpenHandCursor
     }
 
-    // zoom controls overlay
     Rectangle {
         anchors.left: parent.left; anchors.bottom: parent.bottom; anchors.margins: 16
         width: zoomRow.implicitWidth + 24; height: 48
@@ -255,7 +382,6 @@ Item {
         }
     }
 
-    // legend
     Rectangle {
         anchors.right: parent.right; anchors.bottom: parent.bottom; anchors.margins: 16
         width: 130; height: 86
@@ -284,7 +410,6 @@ Item {
         text: "Load a graph to visualize"; color: graphView.colMuted; font.pixelSize: 11
     }
 
-    // placeholder
     Column {
         anchors.centerIn: parent; spacing: 14; visible: !graphView.simLoaded
         Text { anchors.horizontalCenter: parent.horizontalCenter; text: "🕸️"; font.pixelSize: 52 }

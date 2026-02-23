@@ -388,10 +388,7 @@ ApplicationWindow {
                     colEdge:      Theme.border
                     colMuted:     Theme.muted
                     colTxt:       Theme.txt
-                    colCard:      Theme.card
                     colBorder:    Theme.border
-                    colAccent:    Theme.accent
-                    colWarn:      Theme.warn
                 }
             }
         }
