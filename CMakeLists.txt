@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.25)
-project(lab_tasks LANGUAGES CXX)
+project(rgu-labs-term4-probability-modeling LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -O3")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 include_directories(include)
 
 file(GLOB TASK_SOURCES "src/*.cpp")

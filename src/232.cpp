@@ -5,7 +5,7 @@
 
 #include "task_runner.hpp"
 
-int main(int argc, char* argv[]) {
+int main(const int argc, char* argv[]) {
   if (argc != 2) {
     std::cerr << "Usage: " << argv[0] << " <K>\n";
     return 1;
@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     std::vector<int> keys(n);
     std::iota(keys.begin(), keys.end(), 0);
 
-    std::shuffle(keys.begin(), keys.end(), rng);
+    std::ranges::shuffle(keys, rng);
 
     for (int i = 0; i < n; i++) {
       if (keys[i] == 0) {
@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   auto results = runner.run(experiment, K);
   auto counts = tally(results);
 
-  const double p_theory = 1.0 / n;
+  constexpr double p_theory = 1.0 / n;
 
   std::cout << "\nResults\n";
   std::cout << "n = " << n << '\n';
@@ -45,8 +45,8 @@ int main(int argc, char* argv[]) {
   std::cout << "-----+-------------+------------\n";
 
   for (size_t i = 1; i <= n; ++i) {
-    size_t count = counts[i];
-    double p = static_cast<double>(count) / K;
+    const size_t count = counts[i];
+    const double p = static_cast<double>(count) / K;
 
     std::cout << std::setw(4) << i << " |" << std::setw(12) << count << " |"
               << std::fixed << std::setprecision(6) << std::setw(11) << p
