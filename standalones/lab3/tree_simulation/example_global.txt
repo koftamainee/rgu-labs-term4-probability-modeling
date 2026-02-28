@@ -1,0 +1,23 @@
+# Tree Walk Simulation Config — GLOBAL mode
+# All nodes share the same rules.
+# Lines starting with # are comments.
+
+mode global
+
+# Branching factor (children per internal node)
+M 3
+
+# Tree depth (root = level 0, leaves at level = depth)
+depth 4
+
+# Target leaf index (0-based, from left)
+target_leaf 5
+
+# Stuck probability for every internal node
+stuck_prob 0.08
+
+# Child selection distribution: uniform | geometric | left_biased
+# For geometric, specify parameter r (weight of child i = r^i, normalised)
+# For left_biased, specify first_weight (rest share 1 - first_weight equally)
+distribution geometric
+geometric_r 0.5

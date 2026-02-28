@@ -1,0 +1,10 @@
+module tree_simulation
+singleton Theme 1.0 Theme.qml
+AppButton 1.0 AppButton.qml
+ParamSlider 1.0 ParamSlider.qml
+SectionLabel 1.0 SectionLabel.qml
+StatBadge 1.0 StatBadge.qml
+StatDivider 1.0 StatDivider.qml
+TreeView 1.0 TreeView.qml
+HistogramView 1.0 HistogramView.qml
+FilePickerDialog 1.0 FilePickerDialog.qml

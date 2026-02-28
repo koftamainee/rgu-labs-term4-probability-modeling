@@ -1,0 +1,21 @@
+# Tree Walk Simulation Config — CUSTOM mode
+# Per-node stuck probabilities and child weights.
+
+mode custom
+
+M 2
+depth 3
+target_leaf 2
+
+# Per-node definitions (BFS order: root=0, then level by level left-to-right)
+# Format:  node <id>  stuck <p>  weights <w0> <w1> ... <wM-1>
+# Leaf nodes do not need weights (they are ignored).
+# Weights are automatically normalised to sum=1.
+
+node 0  stuck 0.05  weights 3.0 1.0
+node 1  stuck 0.10  weights 1.0 1.0
+node 2  stuck 0.20  weights 1.0 2.0
+node 3  stuck 0.00  weights 1.0 1.0
+node 4  stuck 0.15  weights 2.0 1.0
+node 5  stuck 0.30  weights 1.0 3.0
+node 6  stuck 0.05  weights 1.0 1.0
