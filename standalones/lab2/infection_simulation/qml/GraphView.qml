@@ -24,7 +24,7 @@ Item {
     property real viewOffY:  0.0
 
     function loadGraph() {
-        internal.fetchAndBuild(5000)
+        internal.fetchAndBuild(100000)
     }
 
     function updateStates(nodes) {
