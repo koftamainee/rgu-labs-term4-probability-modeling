@@ -1,0 +1,130 @@
+/* ── Design tokens ───────────────────────────────────────────── */
+:root {
+    --bg:      #0f0c1f;
+    --surface: #1b1733;
+    --card:    #2a244a;
+    --border:  #3a2f60;
+    --accent:  #8b5cf6;
+    --danger:  #f87171;
+    --warn:    #fbbf24;
+    --success: #34d399;
+    --txt:     #e0d9ff;
+    --muted:   #a5a1b8;
+}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--txt);
+    min-height: 100vh;
+}
+
+/* ── Typography ──────────────────────────────────────────────── */
+h1 { font-size: 1.8rem; font-weight: 700; color: var(--txt); }
+h2 { font-size: 1.2rem; font-weight: 600; color: var(--txt); }
+p, li { color: var(--muted); line-height: 1.6; }
+code {
+    background: var(--card);
+    color: var(--accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: .85em;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+
+/* ── Button ──────────────────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .5rem 1.2rem;
+    border-radius: 6px;
+    border: none;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity .15s, transform .1s;
+}
+.btn:hover  { opacity: .85; }
+.btn:active { transform: scale(.97); }
+
+.btn-primary  { background: var(--accent);  color: #fff; }
+.btn-danger   { background: var(--danger);  color: #fff; }
+.btn-ghost    {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border);
+}
+.btn-ghost:hover { color: var(--txt); border-color: var(--accent); }
+
+/* ── Input / Range ───────────────────────────────────────────── */
+input[type="number"],
+input[type="text"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--txt);
+    padding: .4rem .7rem;
+    font-size: .9rem;
+    width: 100%;
+    outline: none;
+    transition: border-color .15s;
+}
+input[type="number"]:focus,
+input[type="text"]:focus { border-color: var(--accent); }
+
+input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+}
+
+/* ── Label ───────────────────────────────────────────────────── */
+.label {
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: .35rem;
+    display: block;
+}
+
+/* ── Status badges ───────────────────────────────────────────── */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: .78rem;
+    font-weight: 600;
+}
+.badge-success { background: #34d39922; color: var(--success); }
+.badge-danger  { background: #f8717122; color: var(--danger);  }
+.badge-warn    { background: #fbbf2422; color: var(--warn);    }
+.badge-accent  { background: #8b5cf622; color: var(--accent);  }
+
+/* ── Scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: var(--surface); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }

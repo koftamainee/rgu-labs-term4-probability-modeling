@@ -34,7 +34,7 @@ int main() {
              static_cast<double>(counts[1]) / simulations);
 
   std::print("P(two parts are colored) = {:.6f}\n",
-             static_cast<double>(counts[2]) / simulations);
+             static_cast<double>(counts[   2]) / simulations);
 
   std::print("P(at least one part is colored) = {:.6f}\n",
              static_cast<double>(counts[1] + counts[2]) / simulations);

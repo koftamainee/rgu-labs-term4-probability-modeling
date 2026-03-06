@@ -1,0 +1,31 @@
+services:
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sim_backend
+    restart: unless-stopped
+    volumes:
+      - ./backend/config.json:/app/config.json:ro
+    expose:
+      - "8080"
+    networks:
+      - sim_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: sim_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - sim_net
+
+networks:
+  sim_net:
+    driver: bridge

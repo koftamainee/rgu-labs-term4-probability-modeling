@@ -227,7 +227,7 @@ int main() {
                                pattern_length,
                                pattern, alphabet, probabilities);
 
-    int experiments_count = 1000;
+    int experiments_count = 1000000;
     simulator.simulate_empirical(experiments_count);
 
     std::cout << "\n\n======================================\n";

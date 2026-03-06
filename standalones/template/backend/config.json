@@ -1,0 +1,8 @@
+{
+    "port": 8080,
+
+    "_comment": "Add your simulation parameters here, e.g.:",
+    "p": 0.5,
+    "q": 0.5,
+    "n": 1000
+}
