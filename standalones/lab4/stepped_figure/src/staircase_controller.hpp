@@ -17,6 +17,13 @@ class StaircaseController : public QObject {
     Q_PROPERTY(int    N_generations   READ get_N              NOTIFY config_changed)
     Q_PROPERTY(int    segment_count   READ get_segment_count  NOTIFY config_changed)
 
+    Q_PROPERTY(int    binom_trials    READ get_binom_trials   NOTIFY config_changed)
+    Q_PROPERTY(double binom_p         READ get_binom_p        NOTIFY config_changed)
+    Q_PROPERTY(double geom_p          READ get_geom_p         NOTIFY config_changed)
+    Q_PROPERTY(double tri_a           READ get_tri_a          NOTIFY config_changed)
+    Q_PROPERTY(double tri_b           READ get_tri_b          NOTIFY config_changed)
+    Q_PROPERTY(double tri_c           READ get_tri_c          NOTIFY config_changed)
+
     Q_PROPERTY(double increasing_prob READ get_inc_prob       NOTIFY batch_done)
     Q_PROPERTY(int    increasing_count READ get_inc_count     NOTIFY batch_done)
     Q_PROPERTY(int    batch_n         READ get_batch_n        NOTIFY batch_done)
@@ -37,6 +44,12 @@ public:
     Q_INVOKABLE void set_n_values(int v);
     Q_INVOKABLE void set_distribution(const QString& name);
     Q_INVOKABLE void set_N(int v);
+    Q_INVOKABLE void set_binom_trials(int v);
+    Q_INVOKABLE void set_binom_p(double v);
+    Q_INVOKABLE void set_geom_p(double v);
+    Q_INVOKABLE void set_tri_a(double v);
+    Q_INVOKABLE void set_tri_b(double v);
+    Q_INVOKABLE void set_tri_c(double v);
 
     Q_INVOKABLE void next_page();
     Q_INVOKABLE void prev_page();
@@ -52,6 +65,12 @@ public:
     QString get_distribution()  const;
     int     get_N()             const;
     int     get_segment_count() const;
+    int     get_binom_trials()  const;
+    double  get_binom_p()       const;
+    double  get_geom_p()        const;
+    double  get_tri_a()         const;
+    double  get_tri_b()         const;
+    double  get_tri_c()         const;
     double  get_inc_prob()      const;
     int     get_inc_count()     const;
     int     get_batch_n()       const;

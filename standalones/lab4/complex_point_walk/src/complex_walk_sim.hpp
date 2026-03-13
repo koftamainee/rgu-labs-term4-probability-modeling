@@ -13,7 +13,9 @@ struct WalkConfig {
     int          binom_trials = 6;
     double       binom_p      = 0.5;
     double       geom_p       = 0.4;
-    int          tri_n        = 4;
+    double       tri_a        = 0.0;   // triangular min
+    double       tri_b        = 0.5;   // triangular peak (mode)
+    double       tri_c        = 1.0;   // triangular max
     double       epsilon      = 0.01;
 };
 

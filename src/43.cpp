@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
   f >> j;
 
   double p = j["p"];
+
   int64_t s_plus = j["s_plus"];
   int64_t s_minus = j["s_minus"];
   std::vector<uint64_t> Ns = j["N"].get<std::vector<uint64_t>>();

@@ -32,17 +32,24 @@ int ComplexWalkSimulation::sample_xi() {
         return d(m_rng);
     }
     case Distribution::DiscreteTriangular: {
-        int tn = m_cfg.tri_n;
-        std::vector<double> weights(n);
-        for (int i = 0; i < n; i++) {
-            int k = i % (tn + 1);
-            double w = (k <= tn / 2)
-                ? static_cast<double>(k + 1)
-                : static_cast<double>(tn - k + 1);
-            weights[i] = std::max(w, 1.0);
+        // Sample continuous Triangular(tri_a, tri_b, tri_c), map onto index {0…n-1}.
+        double a = m_cfg.tri_a, peak = m_cfg.tri_b, c = m_cfg.tri_c;
+        if (a >= c) {
+            std::uniform_int_distribution<int> d(0, n - 1);
+            return d(m_rng);
         }
-        std::discrete_distribution<int> d(weights.begin(), weights.end());
-        return d(m_rng);
+        peak = std::max(a, std::min(peak, c));
+        std::uniform_real_distribution<double> u01(0.0, 1.0);
+        double u = u01(m_rng);
+        double Fc = (peak - a) / (c - a);
+        double sample;
+        if (u < Fc)
+            sample = a + std::sqrt(u * (c - a) * (peak - a));
+        else
+            sample = c - std::sqrt((1.0 - u) * (c - a) * (c - peak));
+        // Map [a, c] -> [0, n-1] and snap to nearest integer index
+        int idx = static_cast<int>(std::round((sample - a) / (c - a) * (n - 1)));
+        return std::max(0, std::min(idx, n - 1));
     }
     }
     return 0;

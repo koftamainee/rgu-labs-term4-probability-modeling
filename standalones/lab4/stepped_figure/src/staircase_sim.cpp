@@ -21,8 +21,6 @@ double StaircaseSimulation::sample_one() {
     case Distribution::Binomial: {
         std::binomial_distribution<int> d(m_cfg.binom_trials, m_cfg.binom_p);
         int k = d(m_rng);
-        int max_k = m_cfg.binom_trials;
-        if (max_k <= 0) return 0.0;
         return (k % (n + 1)) * tau;
     }
     case Distribution::FiniteGeometric: {
@@ -38,17 +36,26 @@ double StaircaseSimulation::sample_one() {
         return d(m_rng) * tau;
     }
     case Distribution::DiscreteTriangular: {
-        int tn = m_cfg.tri_n;
-        std::vector<double> weights(n + 1, 0.0);
-        for (int i = 0; i <= n; i++) {
-            int k = i % (tn + 1);
-            double w = (k <= tn / 2)
-                ? static_cast<double>(k + 1)
-                : static_cast<double>(tn - k + 1);
-            weights[i] = std::max(w, 1.0);
+        // Sample continuous Triangular(tri_a, tri_b, tri_c), then snap to nearest k*tau in {0..n*tau}.
+        double a = m_cfg.tri_a, peak = m_cfg.tri_b, c = m_cfg.tri_c;
+        if (a >= c) {
+            // degenerate — fall back to uniform
+            std::uniform_int_distribution<int> d(0, n);
+            return d(m_rng) * tau;
         }
-        std::discrete_distribution<int> d(weights.begin(), weights.end());
-        return d(m_rng) * tau;
+        peak = std::max(a, std::min(peak, c));
+        std::uniform_real_distribution<double> u01(0.0, 1.0);
+        double u = u01(m_rng);
+        double Fc = (peak - a) / (c - a);
+        double sample;
+        if (u < Fc)
+            sample = a + std::sqrt(u * (c - a) * (peak - a));
+        else
+            sample = c - std::sqrt((1.0 - u) * (c - a) * (c - peak));
+        // Snap to nearest k*tau value in [0, n*tau]
+        int best = static_cast<int>(std::round((sample - a) / (c - a) * n));
+        best = std::max(0, std::min(best, n));
+        return best * tau;
     }
     }
     return 0.0;

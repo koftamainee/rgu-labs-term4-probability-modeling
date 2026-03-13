@@ -68,23 +68,6 @@ ApplicationWindow {
                     onMoved: function(v) { walk_controller.set_x_steps(Math.round(v)) }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true; height: 36; radius: 4
-                    color: Theme.card; border.color: Theme.border; border.width: 1
-                    RowLayout {
-                        anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
-                        Text { text: "s values:"; color: Theme.muted; font.pixelSize: 11; Layout.fillWidth: true }
-                        Text {
-                            text: {
-                                var sv = walk_controller.step_values
-                                if (sv.length === 0) return "—"
-                                return "[" + sv.map(function(v){ return v.toFixed(1) }).join(", ") + "]"
-                            }
-                            color: Theme.accent; font.pixelSize: 10; font.bold: true
-                        }
-                    }
-                }
-
                 SectionLabel { Layout.fillWidth: true; text: "DISTRIBUTION" }
 
                 ColumnLayout {
@@ -101,7 +84,82 @@ ApplicationWindow {
                     }
                 }
 
-                SectionLabel { Layout.fillWidth: true; text: "PROBABILITY" }
+                // Distribution-specific parameters (shown conditionally)
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: walk_controller.distribution === "binomial"
+                    label: "trials  (binomial n)"
+                    value: walk_controller.binom_trials
+                    from: 1; to: 20; stepSize: 1
+                    sliderColor: Theme.warn
+                    onMoved: function(v) { walk_controller.set_binom_trials(Math.round(v)) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: walk_controller.distribution === "binomial"
+                    label: "p  (binomial prob)"
+                    value: walk_controller.binom_p
+                    from: 0.01; to: 0.99; stepSize: 0.01
+                    sliderColor: Theme.warn
+                    onMoved: function(v) { walk_controller.set_binom_p(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: walk_controller.distribution === "geometric"
+                    label: "p  (geometric prob)"
+                    value: walk_controller.geom_p
+                    from: 0.01; to: 0.99; stepSize: 0.01
+                    sliderColor: Theme.success
+                    onMoved: function(v) { walk_controller.set_geom_p(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: walk_controller.distribution === "triangular"
+                    label: "a  (tri min)"
+                    value: walk_controller.tri_a
+                    from: -20; to: 20; stepSize: 0.1
+                    sliderColor: Theme.danger
+                    onMoved: function(v) { walk_controller.set_tri_a(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: walk_controller.distribution === "triangular"
+                    label: "b  (tri peak)"
+                    value: walk_controller.tri_b
+                    from: -20; to: 20; stepSize: 0.1
+                    sliderColor: Theme.danger
+                    onMoved: function(v) { walk_controller.set_tri_b(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: walk_controller.distribution === "triangular"
+                    label: "c  (tri max)"
+                    value: walk_controller.tri_c
+                    from: -20; to: 20; stepSize: 0.1
+                    sliderColor: Theme.danger
+                    onMoved: function(v) { walk_controller.set_tri_c(v) }
+                }
+
+                SectionLabel { Layout.fillWidth: true; text: "STEP VALUES" }
+
+                // Editable steps field
+                Rectangle {
+                    Layout.fillWidth: true; height: 36; radius: 4
+                    color: Theme.card; border.color: stepsField.activeFocus ? Theme.accent : Theme.border; border.width: 1
+                    RowLayout {
+                        anchors.fill: parent; anchors.leftMargin: 10; anchors.rightMargin: 10
+                        Text { text: "s:"; color: Theme.muted; font.pixelSize: 11 }
+                        TextInput {
+                            id: stepsField
+                            Layout.fillWidth: true
+                            text: walk_controller.step_values.map(function(v){ return v.toFixed(1) }).join(", ")
+                            color: Theme.txt; font.pixelSize: 11
+                            selectByMouse: true
+                            onEditingFinished: walk_controller.set_steps(text)
+                            Keys.onReturnPressed: walk_controller.set_steps(text)
+                        }
+                    }
+                }
 
                 ParamSlider {
                     Layout.fillWidth: true
@@ -398,6 +456,21 @@ ApplicationWindow {
                                 Text { text: walk_controller.x_steps; color: Theme.txt; font.pixelSize: 12; font.bold: true }
                                 Text { text: "Distribution";         color: Theme.muted; font.pixelSize: 12 }
                                 Text { text: walk_controller.distribution.toUpperCase(); color: Theme.accent; font.pixelSize: 12; font.bold: true }
+                                // Binomial params
+                                Text { visible: walk_controller.distribution === "binomial"; text: "trials  (binomial n)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: walk_controller.distribution === "binomial"; text: walk_controller.binom_trials; color: Theme.warn; font.pixelSize: 12; font.bold: true }
+                                Text { visible: walk_controller.distribution === "binomial"; text: "p  (binomial prob)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: walk_controller.distribution === "binomial"; text: walk_controller.binom_p.toFixed(2); color: Theme.warn; font.pixelSize: 12; font.bold: true }
+                                // Geometric params
+                                Text { visible: walk_controller.distribution === "geometric"; text: "p  (geometric prob)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: walk_controller.distribution === "geometric"; text: walk_controller.geom_p.toFixed(2); color: Theme.success; font.pixelSize: 12; font.bold: true }
+                                // Triangular params
+                                Text { visible: walk_controller.distribution === "triangular"; text: "a  (tri min)";  color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: walk_controller.distribution === "triangular"; text: walk_controller.tri_a.toFixed(2); color: Theme.danger; font.pixelSize: 12; font.bold: true }
+                                Text { visible: walk_controller.distribution === "triangular"; text: "b  (tri peak)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: walk_controller.distribution === "triangular"; text: walk_controller.tri_b.toFixed(2); color: Theme.danger; font.pixelSize: 12; font.bold: true }
+                                Text { visible: walk_controller.distribution === "triangular"; text: "c  (tri max)";  color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: walk_controller.distribution === "triangular"; text: walk_controller.tri_c.toFixed(2); color: Theme.danger; font.pixelSize: 12; font.bold: true }
                                 Text { text: "s values";             color: Theme.muted; font.pixelSize: 12 }
                                 Text {
                                     text: {
@@ -423,9 +496,9 @@ ApplicationWindow {
                                 text: {
                                     var d = walk_controller.distribution
                                     if (d === "uniform")    return "s ~ Uniform{s₁,…,sₙ}  —  each step value is equally likely."
-                                    if (d === "binomial")   return "s ~ Binomial(trials, p) mod n  —  index mapped onto step values."
-                                    if (d === "geometric")  return "s ~ TruncGeometric(p) on {s₁,…,sₙ}  —  P(k) ∝ (1−p)^k·p, renormalized."
-                                    return "s ~ DiscreteTriangular on {s₁,…,sₙ}  —  peak probability at middle value."
+                                    if (d === "binomial")   return "s ~ Binomial(" + walk_controller.binom_trials + ", " + walk_controller.binom_p.toFixed(2) + ") mod n  —  index mapped onto step values."
+                                    if (d === "geometric")  return "s ~ TruncGeometric(p=" + walk_controller.geom_p.toFixed(2) + ") on {s₁,…,sₙ}  —  P(k) ∝ (1−p)^k·p, renormalized."
+                                    return "s ~ DiscreteTriangular(a=" + walk_controller.tri_a.toFixed(2) + ", b=" + walk_controller.tri_b.toFixed(2) + ", c=" + walk_controller.tri_c.toFixed(2) + ")  —  continuous Triangular CDF-inverted, snapped to nearest step."
                                 }
                                 color: Theme.muted; font.pixelSize: 12; wrapMode: Text.WordWrap
                             }

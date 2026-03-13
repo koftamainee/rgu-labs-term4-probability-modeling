@@ -4,6 +4,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QtConcurrent>
+#include <algorithm>
 
 struct BatchResult {
     std::vector<WalkResult> walks;
@@ -49,7 +50,9 @@ void ComplexWalkController::load_config(const QString& path) {
     if (obj.contains("binomial_trials")) m_cfg.binom_trials = obj["binomial_trials"].toInt(m_cfg.binom_trials);
     if (obj.contains("binomial_p"))      m_cfg.binom_p      = obj["binomial_p"].toDouble(m_cfg.binom_p);
     if (obj.contains("geometric_p"))     m_cfg.geom_p       = obj["geometric_p"].toDouble(m_cfg.geom_p);
-    if (obj.contains("triangular_n"))    m_cfg.tri_n        = obj["triangular_n"].toInt(m_cfg.tri_n);
+    if (obj.contains("triangular_a"))    m_cfg.tri_a        = obj["triangular_a"].toDouble(m_cfg.tri_a);
+    if (obj.contains("triangular_b"))    m_cfg.tri_b        = obj["triangular_b"].toDouble(m_cfg.tri_b);
+    if (obj.contains("triangular_c"))    m_cfg.tri_c        = obj["triangular_c"].toDouble(m_cfg.tri_c);
     if (obj.contains("return_epsilon"))  m_cfg.epsilon      = obj["return_epsilon"].toDouble(m_cfg.epsilon);
 
     m_cfg.rho     = qBound(0.01, m_cfg.rho, 100.0);
@@ -57,6 +60,11 @@ void ComplexWalkController::load_config(const QString& path) {
     m_cfg.M       = qBound(1, m_cfg.M, 10000);
     m_cfg.K       = qBound(1, m_cfg.K, 100000);
     m_cfg.epsilon = qBound(1e-6, m_cfg.epsilon, 1.0);
+    m_cfg.binom_trials = qBound(1, m_cfg.binom_trials, 100);
+    m_cfg.binom_p = qBound(0.01, m_cfg.binom_p, 0.99);
+    m_cfg.geom_p  = qBound(0.01, m_cfg.geom_p,  0.99);
+    if (m_cfg.tri_a > m_cfg.tri_c) std::swap(m_cfg.tri_a, m_cfg.tri_c);
+    m_cfg.tri_b   = std::max(m_cfg.tri_a, std::min(m_cfg.tri_b, m_cfg.tri_c));
 
     rebuild_sim();
     m_has_walk = false;
@@ -111,6 +119,12 @@ void ComplexWalkController::set_M(int v)                { m_cfg.M = qBound(1, v,
 void ComplexWalkController::set_K(int v)                { m_cfg.K = qBound(1, v, 100000); rebuild_sim(); emit config_changed(); }
 void ComplexWalkController::set_epsilon(double v)       { m_cfg.epsilon = qBound(1e-6, v, 1.0); rebuild_sim(); emit config_changed(); }
 void ComplexWalkController::set_distribution(const QString& s) { m_cfg.dist = dist_from_string(s); rebuild_sim(); emit config_changed(); }
+void ComplexWalkController::set_binom_trials(int v)    { m_cfg.binom_trials = qBound(1, v, 100); rebuild_sim(); emit config_changed(); }
+void ComplexWalkController::set_binom_p(double v)      { m_cfg.binom_p = qBound(0.01, v, 0.99); rebuild_sim(); emit config_changed(); }
+void ComplexWalkController::set_geom_p(double v)       { m_cfg.geom_p  = qBound(0.01, v, 0.99); rebuild_sim(); emit config_changed(); }
+void ComplexWalkController::set_tri_a(double v)        { m_cfg.tri_a = v; if (m_cfg.tri_b < v) m_cfg.tri_b = v; if (m_cfg.tri_c < v) m_cfg.tri_c = v; rebuild_sim(); emit config_changed(); }
+void ComplexWalkController::set_tri_b(double v)        { m_cfg.tri_b = std::max(m_cfg.tri_a, std::min(v, m_cfg.tri_c)); rebuild_sim(); emit config_changed(); }
+void ComplexWalkController::set_tri_c(double v)        { m_cfg.tri_c = v; if (m_cfg.tri_b > v) m_cfg.tri_b = v; if (m_cfg.tri_a > v) m_cfg.tri_a = v; rebuild_sim(); emit config_changed(); }
 
 QVariantList ComplexWalkController::get_last_path() const {
     if (!m_has_walk) return {};
@@ -136,3 +150,9 @@ int     ComplexWalkController::get_batch_n()          const { return m_batch_n; 
 bool    ComplexWalkController::is_batch_running()     const { return m_batch_running; }
 bool    ComplexWalkController::get_last_returned()    const { return m_has_walk && m_last_walk.returned; }
 int     ComplexWalkController::get_last_return_step() const { return m_has_walk ? m_last_walk.return_step : -1; }
+int     ComplexWalkController::get_binom_trials()     const { return m_cfg.binom_trials; }
+double  ComplexWalkController::get_binom_p()          const { return m_cfg.binom_p; }
+double  ComplexWalkController::get_geom_p()           const { return m_cfg.geom_p; }
+double  ComplexWalkController::get_tri_a()            const { return m_cfg.tri_a; }
+double  ComplexWalkController::get_tri_b()            const { return m_cfg.tri_b; }
+double  ComplexWalkController::get_tri_c()            const { return m_cfg.tri_c; }

@@ -116,7 +116,61 @@ ApplicationWindow {
                     }
                 }
 
-                SectionLabel { Layout.fillWidth: true; text: "SIMULATION" }
+                // Distribution-specific parameters (shown conditionally)
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: sim_controller.distribution === "binomial"
+                    label: "trials  (binomial n)"
+                    value: sim_controller.binom_trials
+                    from: 1; to: 20; stepSize: 1
+                    sliderColor: Theme.warn
+                    onMoved: function(v) { sim_controller.set_binom_trials(Math.round(v)) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: sim_controller.distribution === "binomial"
+                    label: "p  (binomial prob)"
+                    value: sim_controller.binom_p
+                    from: 0.01; to: 0.99; stepSize: 0.01
+                    sliderColor: Theme.warn
+                    onMoved: function(v) { sim_controller.set_binom_p(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: sim_controller.distribution === "geometric"
+                    label: "p  (geometric prob)"
+                    value: sim_controller.geom_p
+                    from: 0.01; to: 0.99; stepSize: 0.01
+                    sliderColor: Theme.success
+                    onMoved: function(v) { sim_controller.set_geom_p(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: sim_controller.distribution === "triangular"
+                    label: "a  (tri min)"
+                    value: sim_controller.tri_a
+                    from: -20; to: 20; stepSize: 0.1
+                    sliderColor: Theme.danger
+                    onMoved: function(v) { sim_controller.set_tri_a(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: sim_controller.distribution === "triangular"
+                    label: "b  (tri peak)"
+                    value: sim_controller.tri_b
+                    from: -20; to: 20; stepSize: 0.1
+                    sliderColor: Theme.danger
+                    onMoved: function(v) { sim_controller.set_tri_b(v) }
+                }
+                ParamSlider {
+                    Layout.fillWidth: true
+                    visible: sim_controller.distribution === "triangular"
+                    label: "c  (tri max)"
+                    value: sim_controller.tri_c
+                    from: -20; to: 20; stepSize: 0.1
+                    sliderColor: Theme.danger
+                    onMoved: function(v) { sim_controller.set_tri_c(v) }
+                }
 
                 ParamSlider {
                     Layout.fillWidth: true
@@ -390,6 +444,21 @@ ApplicationWindow {
                                 Text { text: sim_controller.n_values;    color: Theme.txt;   font.pixelSize: 12; font.bold: true }
                                 Text { text: "Distribution";             color: Theme.muted; font.pixelSize: 12 }
                                 Text { text: sim_controller.distribution.toUpperCase(); color: Theme.accent; font.pixelSize: 12; font.bold: true }
+                                // Binomial params
+                                Text { visible: sim_controller.distribution === "binomial"; text: "trials  (binomial n)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: sim_controller.distribution === "binomial"; text: sim_controller.binom_trials; color: Theme.warn; font.pixelSize: 12; font.bold: true }
+                                Text { visible: sim_controller.distribution === "binomial"; text: "p  (binomial prob)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: sim_controller.distribution === "binomial"; text: sim_controller.binom_p.toFixed(2); color: Theme.warn; font.pixelSize: 12; font.bold: true }
+                                // Geometric params
+                                Text { visible: sim_controller.distribution === "geometric"; text: "p  (geometric prob)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: sim_controller.distribution === "geometric"; text: sim_controller.geom_p.toFixed(2); color: Theme.success; font.pixelSize: 12; font.bold: true }
+                                // Triangular params
+                                Text { visible: sim_controller.distribution === "triangular"; text: "a  (tri min)";  color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: sim_controller.distribution === "triangular"; text: sim_controller.tri_a.toFixed(2); color: Theme.danger; font.pixelSize: 12; font.bold: true }
+                                Text { visible: sim_controller.distribution === "triangular"; text: "b  (tri peak)"; color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: sim_controller.distribution === "triangular"; text: sim_controller.tri_b.toFixed(2); color: Theme.danger; font.pixelSize: 12; font.bold: true }
+                                Text { visible: sim_controller.distribution === "triangular"; text: "c  (tri max)";  color: Theme.muted; font.pixelSize: 12 }
+                                Text { visible: sim_controller.distribution === "triangular"; text: sim_controller.tri_c.toFixed(2); color: Theme.danger; font.pixelSize: 12; font.bold: true }
                                 Text { text: "N (generations)";          color: Theme.muted; font.pixelSize: 12 }
                                 Text { text: sim_controller.N_generations; color: Theme.txt; font.pixelSize: 12; font.bold: true }
                             }
@@ -407,10 +476,10 @@ ApplicationWindow {
                                     if (d === "uniform")
                                         return "ξ ~ Uniform{0, τ, 2τ, …, nτ}  —  each of the (n+1) values is equally likely."
                                     if (d === "binomial")
-                                        return "ξ ~ Binomial(trials, p) mod (n+1) · τ  —  mapped onto the value set."
+                                        return "ξ ~ Binomial(" + sim_controller.binom_trials + ", " + sim_controller.binom_p.toFixed(2) + ") mod (n+1) · τ  —  mapped onto the value set."
                                     if (d === "geometric")
-                                        return "ξ ~ TruncGeometric(p) on {0,1,…,n}·τ  —  P(k) ∝ (1−p)^k · p, renormalized."
-                                    return "ξ ~ DiscreteTriangular on {0,1,…,n}·τ  —  peak at the middle value."
+                                        return "ξ ~ TruncGeometric(p=" + sim_controller.geom_p.toFixed(2) + ") on {0,1,…,n}·τ  —  P(k) ∝ (1−p)^k · p, renormalized."
+                                    return "ξ ~ Triangular(a=" + sim_controller.tri_a.toFixed(2) + ", b=" + sim_controller.tri_b.toFixed(2) + ", c=" + sim_controller.tri_c.toFixed(2) + ")  —  CDF-inverted, snapped to nearest k·τ."
                                 }
                                 color: Theme.muted; font.pixelSize: 12; wrapMode: Text.WordWrap
                             }

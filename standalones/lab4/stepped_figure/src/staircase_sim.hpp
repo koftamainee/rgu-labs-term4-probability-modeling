@@ -15,9 +15,10 @@ struct SimConfig {
     int    N_generations  = 200;
     int    binom_trials   = 4;
     double binom_p        = 0.5;
-    int    geom_max_k     = 6;
     double geom_p         = 0.4;
-    int    tri_n          = 4;
+    double tri_a          = 0.0;   // triangular min
+    double tri_b          = 0.5;   // triangular peak (mode)
+    double tri_c          = 1.0;   // triangular max
 };
 
 struct Generation {

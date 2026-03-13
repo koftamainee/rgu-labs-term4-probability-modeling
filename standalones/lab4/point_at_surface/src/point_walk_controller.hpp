@@ -27,6 +27,13 @@ class PointWalkController : public QObject {
     Q_PROPERTY(QString distribution   READ get_distribution   NOTIFY config_changed)
     Q_PROPERTY(QVariantList step_values READ get_step_values  NOTIFY config_changed)
 
+    Q_PROPERTY(int    binom_trials    READ get_binom_trials   NOTIFY config_changed)
+    Q_PROPERTY(double binom_p         READ get_binom_p        NOTIFY config_changed)
+    Q_PROPERTY(double geom_p          READ get_geom_p         NOTIFY config_changed)
+    Q_PROPERTY(double tri_a           READ get_tri_a          NOTIFY config_changed)
+    Q_PROPERTY(double tri_b           READ get_tri_b          NOTIFY config_changed)
+    Q_PROPERTY(double tri_c           READ get_tri_c          NOTIFY config_changed)
+
     Q_PROPERTY(double  crossing_prob  READ get_crossing_prob  NOTIFY batch_done)
     Q_PROPERTY(int     crossing_count READ get_crossing_count NOTIFY batch_done)
     Q_PROPERTY(int     batch_n        READ get_batch_n        NOTIFY batch_done)
@@ -49,6 +56,13 @@ public:
     Q_INVOKABLE void set_l(int v);
     Q_INVOKABLE void set_N(int v);
     Q_INVOKABLE void set_distribution(const QString& name);
+    Q_INVOKABLE void set_binom_trials(int v);
+    Q_INVOKABLE void set_binom_p(double v);
+    Q_INVOKABLE void set_geom_p(double v);
+    Q_INVOKABLE void set_tri_a(double v);
+    Q_INVOKABLE void set_tri_b(double v);
+    Q_INVOKABLE void set_tri_c(double v);
+    Q_INVOKABLE void set_steps(const QString& csv); // e.g. "-2,-1,0,1,2"
 
     double       get_h()             const;
     double       get_start_y()       const;
@@ -57,6 +71,12 @@ public:
     int          get_l()             const;
     int          get_N()             const;
     QString      get_distribution()  const;
+    int          get_binom_trials()  const;
+    double       get_binom_p()       const;
+    double       get_geom_p()        const;
+    double       get_tri_a()         const;
+    double       get_tri_b()         const;
+    double       get_tri_c()         const;
     QVariantList get_step_values()   const;
     double       get_crossing_prob() const;
     int          get_crossing_count()const;

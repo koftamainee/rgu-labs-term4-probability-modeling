@@ -16,6 +16,13 @@ class ComplexWalkController : public QObject {
     Q_PROPERTY(double  epsilon       READ get_epsilon      NOTIFY config_changed)
     Q_PROPERTY(QString distribution  READ get_distribution NOTIFY config_changed)
 
+    Q_PROPERTY(int    binom_trials   READ get_binom_trials NOTIFY config_changed)
+    Q_PROPERTY(double binom_p        READ get_binom_p      NOTIFY config_changed)
+    Q_PROPERTY(double geom_p         READ get_geom_p       NOTIFY config_changed)
+    Q_PROPERTY(double tri_a          READ get_tri_a        NOTIFY config_changed)
+    Q_PROPERTY(double tri_b          READ get_tri_b        NOTIFY config_changed)
+    Q_PROPERTY(double tri_c          READ get_tri_c        NOTIFY config_changed)
+
     Q_PROPERTY(double  return_prob   READ get_return_prob  NOTIFY batch_done)
     Q_PROPERTY(int     return_count  READ get_return_count NOTIFY batch_done)
     Q_PROPERTY(int     batch_n       READ get_batch_n      NOTIFY batch_done)
@@ -38,6 +45,12 @@ public:
     Q_INVOKABLE void set_K(int v);
     Q_INVOKABLE void set_epsilon(double v);
     Q_INVOKABLE void set_distribution(const QString& name);
+    Q_INVOKABLE void set_binom_trials(int v);
+    Q_INVOKABLE void set_binom_p(double v);
+    Q_INVOKABLE void set_geom_p(double v);
+    Q_INVOKABLE void set_tri_a(double v);
+    Q_INVOKABLE void set_tri_b(double v);
+    Q_INVOKABLE void set_tri_c(double v);
 
     double       get_rho()              const;
     int          get_n()                const;
@@ -45,6 +58,12 @@ public:
     int          get_K()                const;
     double       get_epsilon()          const;
     QString      get_distribution()     const;
+    int          get_binom_trials()     const;
+    double       get_binom_p()          const;
+    double       get_geom_p()           const;
+    double       get_tri_a()            const;
+    double       get_tri_b()            const;
+    double       get_tri_c()            const;
     double       get_return_prob()      const;
     int          get_return_count()     const;
     int          get_batch_n()          const;

@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QtConcurrent>
+#include <algorithm>
 
 struct BatchResult {
     std::vector<WalkResult> walks;
@@ -52,7 +53,9 @@ void PointWalkController::load_config(const QString& path) {
     if (obj.contains("binomial_trials")) m_cfg.binom_trials = obj["binomial_trials"].toInt(m_cfg.binom_trials);
     if (obj.contains("binomial_p"))      m_cfg.binom_p     = obj["binomial_p"].toDouble(m_cfg.binom_p);
     if (obj.contains("geometric_p"))     m_cfg.geom_p      = obj["geometric_p"].toDouble(m_cfg.geom_p);
-    if (obj.contains("triangular_n"))    m_cfg.tri_n       = obj["triangular_n"].toInt(m_cfg.tri_n);
+    if (obj.contains("triangular_a"))    m_cfg.tri_a       = obj["triangular_a"].toDouble(m_cfg.tri_a);
+    if (obj.contains("triangular_b"))    m_cfg.tri_b       = obj["triangular_b"].toDouble(m_cfg.tri_b);
+    if (obj.contains("triangular_c"))    m_cfg.tri_c       = obj["triangular_c"].toDouble(m_cfg.tri_c);
     if (obj.contains("steps")) {
         QJsonArray arr = obj["steps"].toArray();
         m_cfg.steps.clear();
@@ -64,6 +67,12 @@ void PointWalkController::load_config(const QString& path) {
     m_cfg.l_crossings = qBound(0, m_cfg.l_crossings, 1000);
     m_cfg.N_sims  = qBound(10, m_cfg.N_sims, 10000);
     m_cfg.x_steps = qBound(2, m_cfg.x_steps, 500);
+    m_cfg.binom_trials = qBound(1, m_cfg.binom_trials, 100);
+    m_cfg.binom_p = qBound(0.01, m_cfg.binom_p, 0.99);
+    m_cfg.geom_p  = qBound(0.01, m_cfg.geom_p,  0.99);
+    // Ensure tri_a <= tri_b <= tri_c
+    if (m_cfg.tri_a > m_cfg.tri_c) std::swap(m_cfg.tri_a, m_cfg.tri_c);
+    m_cfg.tri_b = std::max(m_cfg.tri_a, std::min(m_cfg.tri_b, m_cfg.tri_c));
     if (m_cfg.steps.empty()) m_cfg.steps = {-1.0, 0.0, 1.0};
 
     rebuild_sim();
@@ -154,6 +163,21 @@ void PointWalkController::set_distribution(const QString& name) {
     rebuild_sim();
     emit config_changed();
 }
+void PointWalkController::set_binom_trials(int v)    { m_cfg.binom_trials = qBound(1, v, 100); rebuild_sim(); emit config_changed(); }
+void PointWalkController::set_binom_p(double v)      { m_cfg.binom_p = qBound(0.01, v, 0.99); rebuild_sim(); emit config_changed(); }
+void PointWalkController::set_geom_p(double v)       { m_cfg.geom_p  = qBound(0.01, v, 0.99); rebuild_sim(); emit config_changed(); }
+void PointWalkController::set_tri_a(double v)        { m_cfg.tri_a = v; if (m_cfg.tri_b < v) m_cfg.tri_b = v; if (m_cfg.tri_c < v) m_cfg.tri_c = v; rebuild_sim(); emit config_changed(); }
+void PointWalkController::set_tri_b(double v)        { m_cfg.tri_b = qBound(m_cfg.tri_a, v, m_cfg.tri_c); rebuild_sim(); emit config_changed(); }
+void PointWalkController::set_tri_c(double v)        { m_cfg.tri_c = v; if (m_cfg.tri_b > v) m_cfg.tri_b = v; if (m_cfg.tri_a > v) m_cfg.tri_a = v; rebuild_sim(); emit config_changed(); }
+void PointWalkController::set_steps(const QString& csv) {
+    QStringList parts = csv.split(',', Qt::SkipEmptyParts);
+    std::vector<double> vals;
+    for (const QString& p : parts) {
+        bool ok; double d = p.trimmed().toDouble(&ok);
+        if (ok) vals.push_back(d);
+    }
+    if (!vals.empty()) { m_cfg.steps = vals; rebuild_sim(); emit config_changed(); }
+}
 
 QVariantList PointWalkController::get_last_trajectory() const {
     if (!m_has_walk) return {};
@@ -188,6 +212,12 @@ int          PointWalkController::get_K()              const { return m_cfg.K; }
 int          PointWalkController::get_l()              const { return m_cfg.l_crossings; }
 int          PointWalkController::get_N()              const { return m_cfg.N_sims; }
 QString      PointWalkController::get_distribution()   const { return dist_to_string(m_cfg.dist); }
+int          PointWalkController::get_binom_trials()   const { return m_cfg.binom_trials; }
+double       PointWalkController::get_binom_p()        const { return m_cfg.binom_p; }
+double       PointWalkController::get_geom_p()         const { return m_cfg.geom_p; }
+double       PointWalkController::get_tri_a()          const { return m_cfg.tri_a; }
+double       PointWalkController::get_tri_b()          const { return m_cfg.tri_b; }
+double       PointWalkController::get_tri_c()          const { return m_cfg.tri_c; }
 QVariantList PointWalkController::get_step_values()    const {
     QVariantList r;
     for (double v : m_cfg.steps) r.append(v);

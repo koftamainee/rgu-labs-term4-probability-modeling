@@ -50,15 +50,21 @@ void StaircaseController::load_config(const QString& path) {
     if (obj.contains("N_generations"))  m_cfg.N_generations = obj["N_generations"].toInt(m_cfg.N_generations);
     if (obj.contains("binomial_trials")) m_cfg.binom_trials = obj["binomial_trials"].toInt(m_cfg.binom_trials);
     if (obj.contains("binomial_p"))      m_cfg.binom_p      = obj["binomial_p"].toDouble(m_cfg.binom_p);
-    if (obj.contains("geometric_max_k")) m_cfg.geom_max_k   = obj["geometric_max_k"].toInt(m_cfg.geom_max_k);
     if (obj.contains("geometric_p"))     m_cfg.geom_p       = obj["geometric_p"].toDouble(m_cfg.geom_p);
-    if (obj.contains("triangular_n"))    m_cfg.tri_n        = obj["triangular_n"].toInt(m_cfg.tri_n);
+    if (obj.contains("triangular_a"))    m_cfg.tri_a        = obj["triangular_a"].toDouble(m_cfg.tri_a);
+    if (obj.contains("triangular_b"))    m_cfg.tri_b        = obj["triangular_b"].toDouble(m_cfg.tri_b);
+    if (obj.contains("triangular_c"))    m_cfg.tri_c        = obj["triangular_c"].toDouble(m_cfg.tri_c);
 
     m_cfg.M             = qBound(1, m_cfg.M, 100);
     m_cfg.h             = qBound(0.5, m_cfg.h, (double)m_cfg.M);
     m_cfg.tau           = qBound(0.1, m_cfg.tau, 100.0);
     m_cfg.n_values      = qBound(2, m_cfg.n_values, 20);
     m_cfg.N_generations = qBound(10, m_cfg.N_generations, 10000);
+    m_cfg.binom_trials  = qBound(1, m_cfg.binom_trials, 100);
+    m_cfg.binom_p       = qBound(0.01, m_cfg.binom_p, 0.99);
+    m_cfg.geom_p        = qBound(0.01, m_cfg.geom_p,  0.99);
+    if (m_cfg.tri_a > m_cfg.tri_c) std::swap(m_cfg.tri_a, m_cfg.tri_c);
+    m_cfg.tri_b         = std::max(m_cfg.tri_a, std::min(m_cfg.tri_b, m_cfg.tri_c));
 
     rebuild_sim();
     m_generations.clear();
@@ -139,6 +145,13 @@ void StaircaseController::set_N(int v) {
     emit config_changed();
 }
 
+void StaircaseController::set_binom_trials(int v) { m_cfg.binom_trials = qBound(1, v, 100); rebuild_sim(); emit config_changed(); }
+void StaircaseController::set_binom_p(double v)   { m_cfg.binom_p = qBound(0.01, v, 0.99); rebuild_sim(); emit config_changed(); }
+void StaircaseController::set_geom_p(double v)    { m_cfg.geom_p  = qBound(0.01, v, 0.99); rebuild_sim(); emit config_changed(); }
+void StaircaseController::set_tri_a(double v)     { m_cfg.tri_a = v; if (m_cfg.tri_b < v) m_cfg.tri_b = v; if (m_cfg.tri_c < v) m_cfg.tri_c = v; rebuild_sim(); emit config_changed(); }
+void StaircaseController::set_tri_b(double v)     { m_cfg.tri_b = std::max(m_cfg.tri_a, std::min(v, m_cfg.tri_c)); rebuild_sim(); emit config_changed(); }
+void StaircaseController::set_tri_c(double v)     { m_cfg.tri_c = v; if (m_cfg.tri_b > v) m_cfg.tri_b = v; if (m_cfg.tri_a > v) m_cfg.tri_a = v; rebuild_sim(); emit config_changed(); }
+
 void StaircaseController::next_page() {
     if (m_current_page < m_page_count - 1) { m_current_page++; emit page_changed(); }
 }
@@ -185,3 +198,9 @@ int     StaircaseController::get_batch_n()       const { return m_batch_n; }
 bool    StaircaseController::is_batch_running()  const { return m_batch_running; }
 int     StaircaseController::get_page_count()    const { return m_page_count; }
 int     StaircaseController::get_current_page()  const { return m_current_page; }
+int     StaircaseController::get_binom_trials()  const { return m_cfg.binom_trials; }
+double  StaircaseController::get_binom_p()       const { return m_cfg.binom_p; }
+double  StaircaseController::get_geom_p()        const { return m_cfg.geom_p; }
+double  StaircaseController::get_tri_a()         const { return m_cfg.tri_a; }
+double  StaircaseController::get_tri_b()         const { return m_cfg.tri_b; }
+double  StaircaseController::get_tri_c()         const { return m_cfg.tri_c; }

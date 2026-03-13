@@ -32,17 +32,31 @@ double PointWalkSimulation::sample_step() {
         return m_cfg.steps[d(m_rng)];
     }
     case Distribution::DiscreteTriangular: {
-        int tn = m_cfg.tri_n;
-        std::vector<double> weights(n + 1, 0.0);
-        for (int i = 0; i <= n; i++) {
-            int k = i % (tn + 1);
-            double w = (k <= tn / 2)
-                ? static_cast<double>(k + 1)
-                : static_cast<double>(tn - k + 1);
-            weights[i] = std::max(w, 1.0);
+        // Sample from continuous Triangular(a, b, c) then snap to nearest step value.
+        // CDF inversion: F_c = (c-a)/(b-a) is the breakpoint.
+        double a = m_cfg.tri_a, peak = m_cfg.tri_b, c = m_cfg.tri_c;
+        if (a >= c) { // degenerate — fall back to uniform
+            std::uniform_int_distribution<int> d(0, n);
+            return m_cfg.steps[d(m_rng)];
         }
-        std::discrete_distribution<int> d(weights.begin(), weights.end());
-        return m_cfg.steps[d(m_rng)];
+        // Clamp peak to [a, c]
+        peak = std::max(a, std::min(peak, c));
+        std::uniform_real_distribution<double> u01(0.0, 1.0);
+        double u = u01(m_rng);
+        double Fc = (peak - a) / (c - a);
+        double sample;
+        if (u < Fc)
+            sample = a + std::sqrt(u * (c - a) * (peak - a));
+        else
+            sample = c - std::sqrt((1.0 - u) * (c - a) * (c - peak));
+        // Snap to nearest step value
+        int best = 0;
+        double bestDist = std::abs(m_cfg.steps[0] - sample);
+        for (int i = 1; i <= n; i++) {
+            double d = std::abs(m_cfg.steps[i] - sample);
+            if (d < bestDist) { bestDist = d; best = i; }
+        }
+        return m_cfg.steps[best];
     }
     }
     return 0.0;
