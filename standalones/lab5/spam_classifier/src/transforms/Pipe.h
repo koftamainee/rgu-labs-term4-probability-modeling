@@ -14,15 +14,15 @@ class Pipe : public ITransform<TIn, TOut> {
 public:
   Pipe(std::unique_ptr<ITransform<TIn, TMid>> first,
        std::unique_ptr<ITransform<TMid, TOut>> second)
-    : first_(std::move(first)), second_(std::move(second)) {}
+    : m_first(std::move(first)), m_second(std::move(second)) {}
 
   TOut operator()(const TIn& input) const override {
-    return (*second_)((*first_)(input));
+    return (*m_second)((*m_first)(input));
   }
 
 private:
-  std::unique_ptr<ITransform<TIn, TMid>> first_;
-  std::unique_ptr<ITransform<TMid, TOut>> second_;
+  std::unique_ptr<ITransform<TIn, TMid>> m_first;
+  std::unique_ptr<ITransform<TMid, TOut>> m_second;
 };
 
 

@@ -12,7 +12,7 @@ class EmailDataLoader : public IDataLoader<
 public:
   explicit EmailDataLoader();
 
-  std::unique_ptr<IDataSet<std::vector<std::string>, bool>>
+  std::shared_ptr<IDataSet<std::vector<std::string>, bool>>
   load(const std::string& path) const override;
 
   std::shared_ptr<IDataSet<std::vector<std::string>, bool>> load(

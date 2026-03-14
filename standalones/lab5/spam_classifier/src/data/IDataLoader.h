@@ -14,11 +14,12 @@ class IDataLoader {
 public:
   virtual ~IDataLoader() = default;
 
-  virtual std::unique_ptr<IDataSet<TDataOut, TLabel>>
-load(const std::string& source) const = 0;
+  virtual std::shared_ptr<IDataSet<TDataOut, TLabel>>
+  load(const std::string& source) const = 0;
 
   virtual std::shared_ptr<IDataSet<TDataOut, TLabel>>
-  load(const std::string& source, const transform::ITransform<TDataIn, TDataOut> &transform) const = 0;
+  load(const std::string& source,
+       const transform::ITransform<TDataIn, TDataOut>& transform) const = 0;
 };
 }
 
