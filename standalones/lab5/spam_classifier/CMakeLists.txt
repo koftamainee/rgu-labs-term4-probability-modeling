@@ -24,6 +24,10 @@ add_executable(spam_classifier
         src/model/EmailBayes.h
         src/metrics/ConfusionMatrix.h
         src/metrics/ClassificationReport.h
+        src/Application.h
+        src/Application.cpp
+        src/data/EmailDataLoader.cpp
+        src/model/EmailBayes.cpp
 )
 
 target_include_directories(spam_classifier PRIVATE src/)

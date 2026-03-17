@@ -13,6 +13,7 @@ public:
   virtual ~IModel() = default;
 
   virtual void load(const std::string &path) = 0;
+  virtual void save(const std::string &path) = 0;
 
   virtual void fit(const data::IDataSet<TInput, TOutput> &dataset) = 0;
   virtual TOutput predict(const TInput& input) const = 0;
