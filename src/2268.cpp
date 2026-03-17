@@ -5,7 +5,7 @@
 #include "task_runner.hpp"
 
 int main() {
-  int simulations = 1e7;
+  constexpr int simulations = 1e7;
 
   TaskRunner runner;
 

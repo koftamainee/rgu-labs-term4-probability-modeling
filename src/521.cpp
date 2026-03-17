@@ -1,0 +1,73 @@
+#include <cmath>
+#include <print>
+#include <unordered_set>
+#include "task_runner.hpp"
+
+static constexpr double LAMBDA = 1.94;
+static constexpr int M_THRESHOLD = 2;
+
+struct FamilyResult {
+  int children;
+  bool all_boys;
+};
+
+int main() {
+  TaskRunner runner;
+  constexpr size_t N = 2'000'000;
+  constexpr int m = M_THRESHOLD;
+
+  auto results = runner.run([](std::mt19937& rng) -> FamilyResult {
+    std::poisson_distribution<int> poisson(LAMBDA);
+    int k = poisson(rng);
+    std::bernoulli_distribution boy(0.5);
+    for (int i = 0; i < k; ++i)
+      if (!boy(rng)) return {k, false};
+    return {k, true};
+  }, N);
+
+  size_t no_girls_total = 0;
+  size_t no_girls_geq_m = 0;
+  size_t geq_m_total = 0;
+
+  for (const auto& r : results) {
+    if (r.children >= m) geq_m_total++;
+    if (r.all_boys) {
+      no_girls_total++;
+      if (r.children >= m) no_girls_geq_m++;
+    }
+  }
+
+  double p_conditional = static_cast<double>(no_girls_geq_m) / no_girls_total;
+  double p_unconditional = static_cast<double>(geq_m_total) / N;
+
+  auto poisson_tail = [](double lam, int threshold) {
+    double cdf = 0.0, term = std::exp(-lam);
+    for (int k = 0; k < threshold; ++k) {
+      cdf += term;
+      term *= lam / (k + 1);
+    }
+    return 1.0 - cdf;
+  };
+
+  double p_cond_theory = poisson_tail(LAMBDA / 2.0, m);
+  double p_uncond_theory = poisson_tail(LAMBDA, m);
+
+  std::println("=== Results (m={}, lambda={}, N={}) ===", m, LAMBDA, N);
+  std::println("");
+  std::println("Conditional   P(K>={} | no girls):", m);
+  std::println("  Empirical   : {:.6f}", p_conditional);
+  std::println("  Theoretical : {:.6f}  [Poisson({:.2f})]", p_cond_theory,
+               LAMBDA / 2.0);
+  std::println("");
+  std::println("Unconditional P(K>={}):", m);
+  std::println("  Empirical   : {:.6f}", p_unconditional);
+  std::println("  Theoretical : {:.6f}  [Poisson({:.2f})]", p_uncond_theory,
+               LAMBDA);
+  std::println("");
+  std::println("Difference  (conditional - unconditional): {:.6f}",
+               p_conditional - p_unconditional);
+  std::println("Ratio       (conditional / unconditional): {:.4f}",
+               p_conditional / p_unconditional);
+
+  return 0;
+}

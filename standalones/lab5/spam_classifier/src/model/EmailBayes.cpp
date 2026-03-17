@@ -13,8 +13,6 @@
 namespace model {
 EmailBayes::EmailBayes(double alpha) : m_alpha(alpha) {}
 
-
-
 static void write_str(std::ofstream& out, const std::string& s) {
     size_t len = s.size();
     out.write(reinterpret_cast<const char*>(&len), sizeof(len));
