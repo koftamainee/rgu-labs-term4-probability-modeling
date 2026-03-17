@@ -8,52 +8,77 @@
 
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 namespace model {
 EmailBayes::EmailBayes(double alpha) : m_alpha(alpha) {}
 
-void EmailBayes::load(const std::string& path) {
-  std::ifstream in(path);
-  if (!in.is_open()) {
-    throw std::runtime_error("Cannot open file to load model");
-  }
 
-  m_vocabulary.clear();
-  m_likelihood_spam.clear();
-  m_likelihood_ham.clear();
 
-  size_t V;
-  in >> m_alpha;
-  in >> m_total_spam_words >> m_total_ham_words;
-  in >> m_prior_spam >> m_prior_ham;
-  in >> V;
+static void write_str(std::ofstream& out, const std::string& s) {
+    size_t len = s.size();
+    out.write(reinterpret_cast<const char*>(&len), sizeof(len));
+    out.write(s.data(), static_cast<long>(len));
+}
 
-  for (size_t i = 0; i < V; ++i) {
-    std::string word;
-    double l_spam, l_ham;
-    in >> word >> l_spam >> l_ham;
-    m_vocabulary.insert(word);
-    m_likelihood_spam[word] = l_spam;
-    m_likelihood_ham[word] = l_ham;
-  }
+static std::string read_str(std::ifstream& in) {
+    size_t len;
+    in.read(reinterpret_cast<char*>(&len), sizeof(len));
+    std::string s(len, '\0');
+    in.read(s.data(), static_cast<long>(len));
+    return s;
 }
 
 void EmailBayes::save(const std::string& path) {
-  std::ofstream out(path);
-  if (!out.is_open()) {
-    throw std::runtime_error("Cannot open file to save model");
-  }
+    std::ofstream out(path, std::ios::binary);
+    if (!out.is_open())
+        throw std::runtime_error("Cannot open file to save model");
 
-  out << m_alpha << "\n";
-  out << m_total_spam_words << " " << m_total_ham_words << "\n";
-  out << m_prior_spam << " " << m_prior_ham << "\n";
-  out << m_vocabulary.size() << "\n";
+    out.write(reinterpret_cast<const char*>(&m_alpha),            sizeof(m_alpha));
+    out.write(reinterpret_cast<const char*>(&m_total_spam_words), sizeof(m_total_spam_words));
+    out.write(reinterpret_cast<const char*>(&m_total_ham_words),  sizeof(m_total_ham_words));
+    out.write(reinterpret_cast<const char*>(&m_prior_spam),       sizeof(m_prior_spam));
+    out.write(reinterpret_cast<const char*>(&m_prior_ham),        sizeof(m_prior_ham));
 
-  for (const auto& w : m_vocabulary) {
-    out << w << " " << m_likelihood_spam.at(w) << " " << m_likelihood_ham.at(w)
-        <<
-        "\n";
-  }
+    size_t V = m_vocabulary.size();
+    out.write(reinterpret_cast<const char*>(&V), sizeof(V));
+
+    for (const auto& w : m_vocabulary) {
+        write_str(out, w);
+        double l_spam = m_likelihood_spam.at(w);
+        double l_ham  = m_likelihood_ham.at(w);
+        out.write(reinterpret_cast<const char*>(&l_spam), sizeof(l_spam));
+        out.write(reinterpret_cast<const char*>(&l_ham),  sizeof(l_ham));
+    }
+}
+
+void EmailBayes::load(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    if (!in.is_open())
+        throw std::runtime_error("Cannot open file to load model");
+
+    m_vocabulary.clear();
+    m_likelihood_spam.clear();
+    m_likelihood_ham.clear();
+
+    in.read(reinterpret_cast<char*>(&m_alpha),            sizeof(m_alpha));
+    in.read(reinterpret_cast<char*>(&m_total_spam_words), sizeof(m_total_spam_words));
+    in.read(reinterpret_cast<char*>(&m_total_ham_words),  sizeof(m_total_ham_words));
+    in.read(reinterpret_cast<char*>(&m_prior_spam),       sizeof(m_prior_spam));
+    in.read(reinterpret_cast<char*>(&m_prior_ham),        sizeof(m_prior_ham));
+
+    size_t V;
+    in.read(reinterpret_cast<char*>(&V), sizeof(V));
+
+    for (size_t i = 0; i < V; ++i) {
+        std::string word = read_str(in);
+        double l_spam, l_ham;
+        in.read(reinterpret_cast<char*>(&l_spam), sizeof(l_spam));
+        in.read(reinterpret_cast<char*>(&l_ham),  sizeof(l_ham));
+        m_vocabulary.insert(word);
+        m_likelihood_spam[word] = l_spam;
+        m_likelihood_ham[word]  = l_ham;
+    }
 }
 
 void EmailBayes::fit(
