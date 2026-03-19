@@ -16,11 +16,11 @@ int main() {
   constexpr int m = M_THRESHOLD;
 
   auto results = runner.run([](std::mt19937& rng) -> FamilyResult {
-      std::poisson_distribution<int> poisson(LAMBDA);
-      int k = poisson(rng);
-      std::bernoulli_distribution boy(0.5);
-      for (int i = 0; i < k; ++i)
-        if (!boy(rng)) return {k, false};
+    std::poisson_distribution<int> poisson(LAMBDA);
+    int k = poisson(rng);
+    std::bernoulli_distribution boy(0.5);
+    for (int i = 0; i < k; ++i)
+      if (!boy(rng)) return {k, false};
     return {k, true};
 }, N);
 
@@ -36,7 +36,7 @@ int main() {
     }
   }
 
-  double p_conditional   = static_cast<double>(no_girls_geq_m) / no_girls_total;
+  double p_conditional = static_cast<double>(no_girls_geq_m) / no_girls_total;
   double p_unconditional = static_cast<double>(geq_m_total) / N;
 
   std::println("=== Results (m={}, lambda={}, N={}) ===", m, LAMBDA, N);
@@ -47,8 +47,10 @@ int main() {
   std::println("Unconditional P(K>={}):", m);
   std::println("  Empirical : {:.6f}", p_unconditional);
   std::println("");
-  std::println("Difference (conditional - unconditional): {:.6f}", p_conditional - p_unconditional);
-  std::println("Ratio      (conditional / unconditional): {:.4f}",  p_conditional / p_unconditional);
+  std::println("Difference (conditional - unconditional): {:.6f}",
+               p_conditional - p_unconditional);
+  std::println("Ratio      (conditional / unconditional): {:.4f}",
+               p_conditional / p_unconditional);
 
   return 0;
 }
