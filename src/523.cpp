@@ -3,7 +3,7 @@
 #include <print>
 #include <string>
 #include <vector>
-#include "task_runner.hpp"
+#include "../include/task_runner.hpp"
 
 std::string vigenere_encrypt(const std::string& msg, const std::string& key) {
   std::string out(msg.size(), ' ');
@@ -48,7 +48,9 @@ void analyze(
       break;
     }
 
-  double pc = p_cipher.count(target_cipher) ? p_cipher.at(target_cipher) : 0.0;
+  double pc = p_cipher.count(target_cipher)
+                ? p_cipher.at(target_cipher)
+                : 0.0;
   double pcm = (p_cipher_given_msg.count(target_msg) &&
                 p_cipher_given_msg.at(target_msg).count(target_cipher))
                  ? p_cipher_given_msg.at(target_msg).at(target_cipher)
@@ -67,14 +69,25 @@ void analyze(
 int main() {
   std::vector<std::string> msgs = {"ab", "ba", "aa"};
   std::vector<double> msg_probs = {0.5, 0.3, 0.2};
-  std::vector<std::string> keys = {"aa", "ab", "ba"};
-  std::vector<double> key_probs = {0.5, 0.3, 0.2};
 
-  std::println("=== Vigenere ===");
-  analyze(msgs, msg_probs, keys, key_probs, "ba", "ab", true);
+  std::vector<std::string> keys = {"aa", "ab", "ba", "bb"};
+  std::vector<double> key_probs_uniform = {0.25, 0.25, 0.25, 0.25};
+  std::vector<double> key_probs_nonuniform = {0.5, 0.2, 0.2, 0.1};
+
+  std::println("=== Vigenere (non-uniform keys) ===");
+  analyze(msgs, msg_probs, keys, key_probs_nonuniform, "ba", "ab", true);
   std::println("");
-  std::println("=== Vernam ===");
-  analyze(msgs, msg_probs, keys, key_probs, "ba", "ab", false);
+
+  std::println("=== Vigenere (uniform keys) ===");
+  analyze(msgs, msg_probs, keys, key_probs_uniform, "ba", "ab", true);
+  std::println("");
+
+  std::println("=== Vernam (non-uniform keys) ===");
+  analyze(msgs, msg_probs, keys, key_probs_nonuniform, "ba", "ab", false);
+  std::println("");
+
+  std::println("=== Vernam (uniform keys) ===");
+  analyze(msgs, msg_probs, keys, key_probs_uniform, "ba", "ab", false);
 
   return 0;
 }
