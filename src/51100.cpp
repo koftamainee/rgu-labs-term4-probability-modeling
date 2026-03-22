@@ -11,12 +11,12 @@ int main() {
   constexpr size_t N = 1'000'000;
 
   auto results = runner.run([](std::mt19937& rng) -> Result {
-      std::bernoulli_distribution err1(0.05);
-      std::bernoulli_distribution err2(0.1);
-      bool e1 = err1(rng);
-      bool e2 = err2(rng);
-      bool detected = e1 != e2;
-      return {detected, e1};
+    std::bernoulli_distribution err1(0.05);
+    std::bernoulli_distribution err2(0.1);
+    bool e1 = err1(rng);
+    bool e2 = err2(rng);
+    bool detected = e1 != e2;
+    return {detected, e1};
   }, N);
 
   size_t detected = 0, first_wrong = 0;
