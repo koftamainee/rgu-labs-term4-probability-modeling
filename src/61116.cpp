@@ -10,8 +10,7 @@ int main() {
     int right = 0;
     for (int i = 0; i < 4; i++) {
       double x = point(rng);
-      if (x < 2.0) { left++; }
-      else { right++; }
+      if (x < 2.0) { left++; } else { right++; }
     }
     return left == 2 && right == 2;
   };

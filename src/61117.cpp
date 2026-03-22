@@ -12,8 +12,7 @@ int main() {
     int far = 0;
     for (int i = 0; i < 5; i++) {
       double p = point(rng);
-      if (p < x) { near++; }
-      else { far++; }
+      if (p < x) { near++; } else { far++; }
     }
     return near == 2 && far == 3;
   };

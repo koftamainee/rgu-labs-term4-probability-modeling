@@ -13,13 +13,13 @@ int main() {
     int coin = coin_dist(rng);
     bool double_headed = coin < k;
 
-    bool first  = double_headed ? true : fair(rng);
+    bool first = double_headed ? true : fair(rng);
     bool second = double_headed ? true : fair(rng);
-    bool third  = double_headed ? true : fair(rng);
+    bool third = double_headed ? true : fair(rng);
     bool fourth = double_headed ? true : fair(rng);
 
     bool first_three = first && second && third;
-    return { first_three, first_three && fourth };
+    return {first_three, first_three && fourth};
   };
 
   TaskRunner runner;
@@ -27,7 +27,7 @@ int main() {
   std::println();
 
   size_t three_heads = 0;
-  size_t four_heads  = 0;
+  size_t four_heads = 0;
   for (const auto& [cond, full] : results) {
     if (cond) ++three_heads;
     if (full) ++four_heads;
