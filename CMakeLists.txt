@@ -9,4 +9,12 @@ file(GLOB TASK_SOURCES "src/*.cpp")
 foreach(src_file ${TASK_SOURCES})
     get_filename_component(task_name ${src_file} NAME_WE)
     add_executable(${task_name} ${src_file})
+    target_link_libraries(${task_name}
+            glfw
+            imgui
+            implot
+            GL
+            dl
+            pthread
+    )
 endforeach()

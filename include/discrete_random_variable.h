@@ -48,7 +48,7 @@ void from_json(const nlohmann::json& j, DiscreteRandomVariable& rv);
 #include <fstream>
 #include <stdexcept>
 
-DiscreteRandomVariable::DiscreteRandomVariable() {}
+DiscreteRandomVariable::DiscreteRandomVariable() = default;
 
 DiscreteRandomVariable::DiscreteRandomVariable(
     const std::vector<std::pair<double, double>>& data) {
@@ -130,8 +130,9 @@ double DiscreteRandomVariable::kurtosis() const {
 std::vector<std::pair<double, double>> DiscreteRandomVariable::pmf() const {
   std::vector<std::pair<double, double>> result;
 
-  for (const auto& [value, probability] : m_data) {
-    result.push_back({value, probability});
+  result.reserve(m_data.size());
+for (const auto& [value, probability] : m_data) {
+    result.emplace_back(value, probability);
   }
 
   return result;
@@ -144,7 +145,7 @@ std::vector<std::pair<double, double>> DiscreteRandomVariable::cdf() const {
 
   for (const auto& [value, probability] : m_data) {
     cumulative += probability;
-    result.push_back({value, cumulative});
+    result.emplace_back(value, cumulative);
   }
 
   return result;
@@ -163,7 +164,7 @@ DiscreteRandomVariable DiscreteRandomVariable::operator+(
     }
   }
 
-  return DiscreteRandomVariable::from_map(result_map);
+  return from_map(result_map);
 }
 
 DiscreteRandomVariable DiscreteRandomVariable::operator*(
@@ -263,9 +264,9 @@ void to_json(nlohmann::json& j, const DiscreteRandomVariable& rv) {
 void from_json(const nlohmann::json& j, DiscreteRandomVariable& rv) {
   std::map<double, double> data;
 
-  for (size_t i = 0; i < j.size(); i++) {
-    double value = j[i].at("value").get<double>();
-    double probability = j[i].at("probability").get<double>();
+  for (const auto & i : j) {
+    double value = i.at("value").get<double>();
+    double probability = i.at("probability").get<double>();
 
     data[value] = probability;
   }
