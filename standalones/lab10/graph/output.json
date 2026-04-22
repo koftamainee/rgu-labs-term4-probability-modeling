@@ -1,0 +1,32 @@
+{
+  "results": {
+    "clique_components": {
+      "mean": 0.45215,
+      "variance": 0.5297903775
+    },
+    "connected_components": {
+      "mean": 1.47089,
+      "variance": 0.5574126078999999
+    },
+    "heaviest_cycle_edges": {
+      "mean": 6.78686,
+      "variance": 4.845311340400002
+    },
+    "isolated_vertices": {
+      "mean": 0.40544,
+      "variance": 0.4526984063999999
+    },
+    "longest_cycle_edges": {
+      "mean": 7.07996,
+      "variance": 5.063246398399997
+    },
+    "mst_weight": {
+      "mean": 33.63635,
+      "variance": 137.20904867750005
+    },
+    "spanning_trees": {
+      "mean": 1955.23101,
+      "variance": 88756208.18610439
+    }
+  }
+}
